@@ -1,0 +1,177 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  release:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2022
+          - os: ubuntu-22.04
+          - os: macos-14
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Add macOS universal targets
+        if: runner.os == 'macOS'
+        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
+
+      - name: Install Linux system deps
+        if: runner.os == 'Linux'
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential pkg-config curl wget file patchelf libssl-dev \
+            rpm libgtk-3-dev librsvg2-dev libayatana-appindicator3-dev
+          sudo apt-get install -y --no-install-recommends libwebkit2gtk-4.1-dev \
+            || sudo apt-get install -y --no-install-recommends libwebkit2gtk-4.0-dev
+          sudo apt-get install -y --no-install-recommends libsoup-3.0-dev \
+            || sudo apt-get install -y --no-install-recommends libsoup2.4-dev
+
+      - name: Install frontend deps
+        run: npm ci
+
+      - name: Build (macOS universal)
+        if: runner.os == 'macOS'
+        run: npm run tauri build -- --target universal-apple-darwin
+
+      - name: Build (Windows)
+        if: runner.os == 'Windows'
+        run: npm run tauri build
+
+      - name: Build (Linux)
+        if: runner.os == 'Linux'
+        run: npm run tauri build -- --bundles appimage,deb,rpm
+
+      - name: Prepare macOS assets
+        if: runner.os == 'macOS'
+        run: |
+          set -euxo pipefail
+          mkdir -p release-assets
+          VERSION="${GITHUB_REF_NAME}"
+
+          DMG=$(find src-tauri/target -name "*.dmg" | head -1 || true)
+          if [ -n "$DMG" ]; then
+            cp "$DMG" "release-assets/PAYAPI-${VERSION}-macOS.dmg"
+            echo "DMG: $DMG"
+          fi
+
+          APP=$(find src-tauri/target -name "*.app" -type d | head -1 || true)
+          if [ -n "$APP" ]; then
+            ditto -c -k --sequesterRsrc --keepParent "$APP" "release-assets/PAYAPI-${VERSION}-macOS.zip"
+            echo "ZIP: $APP"
+          fi
+
+      - name: Prepare Windows assets
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path release-assets | Out-Null
+          $VERSION = $env:GITHUB_REF_NAME
+
+          $msi = Get-ChildItem -Path src-tauri/target/release/bundle -Recurse -Include *.msi -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($null -ne $msi) {
+            Copy-Item $msi.FullName "release-assets/PAYAPI-$VERSION-Windows-x64.msi"
+            Write-Host "MSI: $($msi.FullName)"
+          }
+
+          $nsis = Get-ChildItem -Path src-tauri/target/release/bundle -Recurse -Include *-setup.exe, *Setup.exe -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($null -ne $nsis) {
+            Copy-Item $nsis.FullName "release-assets/PAYAPI-$VERSION-Windows-x64-Setup.exe"
+            Write-Host "NSIS: $($nsis.FullName)"
+          }
+
+      - name: Prepare Linux assets
+        if: runner.os == 'Linux'
+        run: |
+          set -euxo pipefail
+          mkdir -p release-assets
+          VERSION="${GITHUB_REF_NAME}"
+
+          APPIMAGE=$(find src-tauri/target/release/bundle -name "*.AppImage" | head -1 || true)
+          [ -n "$APPIMAGE" ] && cp "$APPIMAGE" "release-assets/PAYAPI-${VERSION}-Linux-x86_64.AppImage"
+
+          DEB=$(find src-tauri/target/release/bundle -name "*.deb" | head -1 || true)
+          [ -n "$DEB" ] && cp "$DEB" "release-assets/PAYAPI-${VERSION}-Linux-x86_64.deb"
+
+          RPM=$(find src-tauri/target/release/bundle -name "*.rpm" | head -1 || true)
+          [ -n "$RPM" ] && cp "$RPM" "release-assets/PAYAPI-${VERSION}-Linux-x86_64.rpm"
+
+      - name: List prepared assets
+        shell: bash
+        run: ls -la release-assets || true
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-assets-${{ runner.os }}
+          path: release-assets/*
+          if-no-files-found: error
+
+  publish-release:
+    name: Publish GitHub Release
+    runs-on: ubuntu-22.04
+    needs: release
+    permissions:
+      contents: write
+    steps:
+      - name: Download built artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: release-assets-*
+          path: release-assets
+          merge-multiple: true
+
+      - name: List artifacts
+        run: ls -la release-assets
+
+      - name: Publish Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: PAYAPI ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          body: |
+            ## PAYAPI ${{ github.ref_name }}
+
+            x402 协议 AI 支付代理桌面客户端
+
+            ### 下载
+
+            | 平台 | 文件 |
+            |------|------|
+            | macOS | `PAYAPI-${{ github.ref_name }}-macOS.dmg` |
+            | Windows | `PAYAPI-${{ github.ref_name }}-Windows-x64.msi` |
+            | Linux | `PAYAPI-${{ github.ref_name }}-Linux-x86_64.AppImage` / `.deb` / `.rpm` |
+
+            > macOS 首次打开如遇"无法验证开发者"，请右键点击 → 打开。
+          files: release-assets/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,58 @@
+[package]
+name = "payapi-app"
+version = "0.1.0"
+description = "PayApi x402 Payment Client"
+authors = []
+edition = "2021"
+rust-version = "1.85.0"
+
+[lib]
+name = "payapi_app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+doctest = false
+
+[build-dependencies]
+tauri-build = { version = "2.4.0", features = [] }
+
+[dependencies]
+serde_json = { version = "1.0", features = ["preserve_order"] }
+serde = { version = "1.0", features = ["derive"] }
+log = "0.4"
+chrono = { version = "0.4", features = ["serde"] }
+tauri = { version = "2.8.2", features = ["tray-icon", "image-png"] }
+tauri-plugin-log = "2"
+tauri-plugin-opener = "2"
+tauri-plugin-process = "2"
+tauri-plugin-window-state = "2"
+dirs = "5.0"
+toml_edit = "0.22"
+reqwest = { version = "0.12", features = ["rustls-tls", "json"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "time", "sync"] }
+axum = "0.7"
+once_cell = "1.21.3"
+base64 = "0.22"
+rusqlite = { version = "0.31", features = ["bundled"] }
+alloy-primitives = { version = "1.6", features = ["rand"] }
+alloy-sol-types = "1.6"
+alloy-signer = "2.1"
+alloy-signer-local = { version = "2.1", features = ["mnemonic"] }
+rand = "0.8"
+hex = "0.4"
+thiserror = "2.0"
+anyhow = "1.0"
+
+[target.'cfg(any(target_os = "macos", target_os = "windows", target_os = "linux"))'.dependencies]
+tauri-plugin-single-instance = "2"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+webkit2gtk = { version = "2.0.1", features = ["v2_16"] }
+
+[profile.release]
+codegen-units = 1
+lto = "thin"
+opt-level = "s"
+panic = "unwind"
+strip = "symbols"
+
+[dev-dependencies]
+tempfile = "3"
