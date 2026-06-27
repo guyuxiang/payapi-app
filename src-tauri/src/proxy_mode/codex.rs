@@ -108,7 +108,9 @@ fn inject_x402_into_config(existing: &str) -> String {
     if let Some(providers) = doc["model_providers"].as_table_mut() {
         let mut custom = Table::new();
         custom["name"] = toml_edit::value("PayApi x402");
-        custom["base_url"] = toml_edit::value(X402_PROXY_URL);
+        // Codex appends "/responses" to base_url, so include "/v1" here to reach
+        // the x402 server's /v1/responses route (OpenAI's own base_url has /v1 too).
+        custom["base_url"] = toml_edit::value(format!("{X402_PROXY_URL}/v1"));
         custom["wire_api"] = toml_edit::value("responses");
         custom["requires_openai_auth"] = toml_edit::value(true);
         providers.insert("custom", Item::Table(custom));

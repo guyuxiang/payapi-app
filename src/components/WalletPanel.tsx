@@ -3,7 +3,16 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { getSetting, sendUsdc, setSetting } from "../lib/api";
 import { extractError } from "../lib/error";
-import { extractRecords, recAmount, recLabel, recModel, recRelTime } from "../lib/payrecord";
+import {
+  PayRecord,
+  recAmountNum,
+  recDurationLabel,
+  recLocalTime,
+  recModel,
+  recPriceLabels,
+  recTokenLabels,
+  recCachedTokens,
+} from "../lib/payrecord";
 import { useWallet } from "../hooks/useWallet";
 
 // ── SVG icons ──────────────────────────────────────────────
@@ -147,6 +156,11 @@ export function WalletPanel({ serverUrl }: { serverUrl: string }) {
       .catch(() => toast.error("复制失败"));
   };
 
+  // ── Pagination ─────────────────────────────────────────
+  const PAGE_SIZE = 15;
+  const [page, setPage] = useState(1);
+  useEffect(() => { setPage(1); }, [history]);
+
   // ── No wallet ──────────────────────────────────────────
 
   if (!wallet) {
@@ -191,7 +205,10 @@ export function WalletPanel({ serverUrl }: { serverUrl: string }) {
 
   // ── Has wallet ─────────────────────────────────────────
 
-  const payRecords = extractRecords(history, 200);
+  // Local history is already newest-first from the DB (ORDER BY id DESC), don't reverse.
+  const payRecords: PayRecord[] = Array.isArray(history) ? (history as PayRecord[]) : [];
+  const totalPages = Math.max(1, Math.ceil(payRecords.length / PAGE_SIZE));
+  const pageRecords = payRecords.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <div className="panel">
@@ -221,11 +238,12 @@ export function WalletPanel({ serverUrl }: { serverUrl: string }) {
               ) : (
                 <span className="balance-nil">—</span>
               )}
+              <button className={`icon-btn bal-refresh${loadingBal ? " bal-refresh-spin" : ""}`}
+                onClick={fetchBalance} disabled={loadingBal} title="刷新余额">
+                <IconRefresh />
+              </button>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-              <button className="btn btn-ghost btn-sm" onClick={fetchBalance} disabled={loadingBal}>
-                {loadingBal ? "查询中..." : "刷新余额"}
-              </button>
               <button className="btn btn-ghost btn-sm" onClick={handleExport}>
                 备份钱包
               </button>
@@ -332,41 +350,76 @@ export function WalletPanel({ serverUrl }: { serverUrl: string }) {
         <div className="card-head">
           <div className="ci ci-blue"><IconHistory /></div>
           <span className="card-title">消费记录</span>
-          {payRecords.length > 0 && (
-            <span className="count-badge">{payRecords.length} 条</span>
-          )}
-          <button className="icon-btn" onClick={fetchHistory} disabled={loadingHist} title="刷新">
+          <button className="icon-btn" onClick={() => { setPage(1); fetchHistory(); }} disabled={loadingHist} title="刷新">
             <IconRefresh />
           </button>
         </div>
 
         {payRecords.length > 0 ? (
-          <div style={{ overflowX: "auto" }}>
-            <div className="hist-header">
-              <span className="hist-time">时间</span>
-              <span className="hist-info">工具 / 模型</span>
-              <span className="hist-amount">金额</span>
+          <>
+            <div style={{ overflowX: "auto" }}>
+              <table className="pay-table">
+                <thead>
+                  <tr>
+                    <th>时间</th>
+                    <th>模型</th>
+                    <th>耗时</th>
+                    <th>Token</th>
+                    <th>费用</th>
+                    <th>单价</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pageRecords.map((rec, i) => {
+                    const amount = recAmountNum(rec);
+                    const tok = recTokenLabels(rec);
+                    const price = recPriceLabels(rec);
+                    const hasCached = recCachedTokens(rec) > 0;
+                    return (
+                      <tr key={i}>
+                        <td className="pay-td-time">{recLocalTime(rec)}</td>
+                        <td className="pay-td-model" title={recModel(rec)}>{recModel(rec) || "—"}</td>
+                        <td className="pay-td-num">{recDurationLabel(rec)}</td>
+                        <td className="pay-td-num">
+                          <span className="inline-split">
+                            <span>{tok.input}<span className="split-lbl">in</span></span>
+                            {hasCached && <span className="split-cached">{tok.cached}<span className="split-lbl">c</span></span>}
+                            <span>{tok.output}<span className="split-lbl">out</span></span>
+                          </span>
+                        </td>
+                        <td className="pay-td-num pay-td-cost">
+                          {amount > 0 ? `$${amount.toFixed(5)}` : "—"}
+                        </td>
+                        <td className="pay-td-num">
+                          <span className="inline-split">
+                            <span>{price.input}<span className="split-lbl">in</span></span>
+                            {hasCached && price.cached && <span className="split-cached">{price.cached}<span className="split-lbl">c</span></span>}
+                            <span>{price.output}<span className="split-lbl">out</span></span>
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
-            <div className="hist-body">
-              {payRecords.map((rec, i) => {
-                const model = recModel(rec);
-                return (
-                  <div key={i} className="hist-row">
-                    <span className="hist-time">{recRelTime(rec)}</span>
-                    <span className="hist-info">
-                      <span className="hist-tool">{recLabel(rec)}</span>
-                      {model && <span className="hist-model">{model}</span>}
-                    </span>
-                    <span className="hist-amount">{recAmount(rec)}</span>
-                  </div>
-                );
-              })}
+            <div className="pay-pager">
+              <span className="pay-pager-count">{payRecords.length} 条</span>
+              {totalPages > 1 && (
+                <>
+                  <button className="btn btn-ghost btn-sm" disabled={page <= 1}
+                    onClick={() => setPage(p => Math.max(1, p - 1))}>‹ 上一页</button>
+                  <span className="pay-pager-info">{page} / {totalPages}</span>
+                  <button className="btn btn-ghost btn-sm" disabled={page >= totalPages}
+                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}>下一页 ›</button>
+                </>
+              )}
             </div>
-          </div>
+          </>
         ) : (
           <div style={{ padding: "16px 13px", textAlign: "center" }}>
             <p style={{ fontSize: 12, color: "var(--t3)" }}>
-              {loadingHist ? "加载中..." : serverUrl ? "暂无消费记录" : "请先在设置中填写服务器地址"}
+              {loadingHist ? "加载中..." : "通过代理发起请求后显示"}
             </p>
           </div>
         )}

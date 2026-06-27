@@ -2,10 +2,14 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import {
   ToolDetection,
+  applyTool,
   detectTools,
   getSetting,
+  getProxyTools,
   proxyModeStatus,
+  restoreTool,
   setSetting,
+  setProxyTools,
 } from "../lib/api";
 import { extractError } from "../lib/error";
 
@@ -65,12 +69,15 @@ interface Props {
 }
 
 export function SettingsPanel({ serverUrl, setServerUrl }: Props) {
-  const [draft,    setDraft]    = useState(serverUrl);
-  const [network,  setNetwork]  = useState("base-sepolia");
-  const [detected, setDetected] = useState<ToolDetection>({
+  const [draft,        setDraft]        = useState(serverUrl);
+  const [network,      setNetwork]      = useState("base-sepolia");
+  const [detected,     setDetected]     = useState<ToolDetection>({
     claude: false, claude_desktop: false, codex: false, gemini: false,
   });
-  const [modeOn, setModeOn] = useState(false);
+  const [modeOn,       setModeOn]       = useState(false);
+  const [enabledTools, setEnabledTools] = useState<Set<string>>(
+    new Set(["claude", "claude_desktop", "codex", "gemini"])
+  );
 
   useEffect(() => { setDraft(serverUrl); }, [serverUrl]);
 
@@ -78,6 +85,7 @@ export function SettingsPanel({ serverUrl, setServerUrl }: Props) {
     getSetting("network").then((v) => { if (v) setNetwork(v); }).catch(() => {});
     detectTools().then(setDetected).catch(() => {});
     proxyModeStatus().then(setModeOn).catch(() => {});
+    getProxyTools().then((keys) => setEnabledTools(new Set(keys))).catch(() => {});
   }, []);
 
   const save = async () => {
@@ -87,6 +95,21 @@ export function SettingsPanel({ serverUrl, setServerUrl }: Props) {
       toast.success("设置已保存");
     } catch (e) {
       toast.error("保存失败: " + extractError(e));
+    }
+  };
+
+  const toggleTool = async (key: string, checked: boolean) => {
+    const next = new Set(enabledTools);
+    if (checked) next.add(key); else next.delete(key);
+    setEnabledTools(next);
+    try {
+      await setProxyTools([...next]);
+      if (modeOn) {
+        if (checked) await applyTool(key);
+        else await restoreTool(key);
+      }
+    } catch (e) {
+      toast.error("工具配置失败: " + extractError(e));
     }
   };
 
@@ -161,20 +184,36 @@ export function SettingsPanel({ serverUrl, setServerUrl }: Props) {
           <span className="count-badge">{installedCount}/{TOOLS.length} 已安装</span>
         </div>
         <div style={{ padding: "0 13px 4px" }}>
+          <p className="form-hint" style={{ marginBottom: 8 }}>
+            勾选需要代理的工具，开启代理模式时自动注入 x402 配置
+          </p>
           <div className="tool-list">
             {TOOLS.map((t) => {
-              const installed  = detected[t.key];
-              const configured = installed && modeOn;
+              const installed = detected[t.key];
+              const checked   = enabledTools.has(t.key);
               return (
-                <div key={t.key} className="tool-row">
+                <label
+                  key={t.key}
+                  className={`tool-row tool-row-check${!installed ? " tool-row-dim" : ""}`}
+                  style={{ cursor: installed ? "pointer" : "default" }}
+                >
                   <div className="tool-info">
                     <span className={`tool-name${!installed ? " dim" : ""}`}>{t.name}</span>
-                    {installed && <span className="tool-path">{t.configHint}</span>}
+                    <span className="tool-path">
+                      {installed ? t.configHint : "未安装"}
+                    </span>
                   </div>
-                  <span className={`pill ${configured ? "pill-green" : installed ? "pill-amber" : "pill-dim"}`}>
-                    {!installed ? "未安装" : configured ? "已配置" : "待配置"}
-                  </span>
-                </div>
+                  {installed && modeOn && checked && (
+                    <span className="pill pill-green" style={{ fontSize: 10, padding: "1px 7px" }}>已配置</span>
+                  )}
+                  <input
+                    type="checkbox"
+                    className="tool-checkbox"
+                    checked={checked && installed}
+                    disabled={!installed}
+                    onChange={(e) => toggleTool(t.key, e.target.checked)}
+                  />
+                </label>
               );
             })}
           </div>

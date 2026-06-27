@@ -25,7 +25,7 @@ pub fn run() {
                 .flatten()
                 .and_then(|s| s.parse::<u16>().ok())
                 .unwrap_or(8402);
-            if let Err(e) = proxy::server::start(url, port) {
+            if let Err(e) = proxy::server::start(url, port, Arc::clone(&db)) {
                 log::warn!("auto-start proxy failed: {e}");
             }
         }
@@ -48,12 +48,16 @@ pub fn run() {
             commands::wallet::x402_get_wallet,
             commands::wallet::x402_get_address,
             commands::wallet::x402_get_balance,
-            commands::wallet::x402_get_history,
+            commands::wallet::x402_get_local_history,
             // 代理模式
             commands::proxy_mode::x402_proxy_mode_enable,
             commands::proxy_mode::x402_proxy_mode_disable,
             commands::proxy_mode::x402_proxy_mode_status,
             commands::proxy_mode::x402_detect_tools,
+            commands::proxy_mode::x402_get_proxy_tools,
+            commands::proxy_mode::x402_set_proxy_tools,
+            commands::proxy_mode::x402_apply_tool,
+            commands::proxy_mode::x402_restore_tool,
             // 设置
             commands::settings::x402_get_setting,
             commands::settings::x402_set_setting,
@@ -61,3 +65,9 @@ pub fn run() {
         .run(tauri::generate_context!())
         .expect("error running tauri application");
 }
+
+
+
+
+
+

@@ -39,3 +39,23 @@ pub fn x402_proxy_mode_disable(state: State<'_, DbState>) -> Result<(), String> 
 pub fn x402_proxy_mode_status(state: State<'_, DbState>) -> Result<bool, String> {
     crate::proxy_mode::is_enabled(&state.0).map_err(|e| e.to_string())
 }
+
+#[tauri::command]
+pub fn x402_get_proxy_tools(state: State<'_, DbState>) -> Vec<String> {
+    crate::proxy_mode::get_enabled_tools(&state.0)
+}
+
+#[tauri::command]
+pub fn x402_set_proxy_tools(state: State<'_, DbState>, tools: Vec<String>) -> Result<(), String> {
+    crate::proxy_mode::set_enabled_tools(&state.0, &tools).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn x402_apply_tool(state: State<'_, DbState>, key: String) -> Result<(), String> {
+    crate::proxy_mode::apply_tool(&state.0, &key).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn x402_restore_tool(state: State<'_, DbState>, key: String) -> Result<(), String> {
+    crate::proxy_mode::restore_tool(&state.0, &key).map_err(|e| e.to_string())
+}

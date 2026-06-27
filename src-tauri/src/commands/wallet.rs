@@ -1,10 +1,13 @@
 //! Tauri commands: wallet, proxy start/stop.
 
+use crate::commands::proxy_mode::DbState;
+use crate::store::db::PayLogEntry;
 use crate::wallet::balance::{format_usdc, usdc_balance};
 use crate::wallet::{WalletInfo, WalletManager};
 use alloy_primitives::Address;
 use serde::Serialize;
 use std::str::FromStr;
+use tauri::State;
 
 #[derive(Serialize)]
 pub struct BalanceInfo {
@@ -52,8 +55,12 @@ pub async fn x402_get_balance(rpc_url: String, usdc_address: String) -> Result<B
 }
 
 #[tauri::command]
-pub fn x402_start_proxy(server_url: String, port: Option<u16>) -> Result<u16, String> {
-    crate::proxy::server::start(server_url, port.unwrap_or(8402))
+pub fn x402_start_proxy(
+    state: State<'_, DbState>,
+    server_url: String,
+    port: Option<u16>,
+) -> Result<u16, String> {
+    crate::proxy::server::start(server_url, port.unwrap_or(8402), std::sync::Arc::clone(&state.0))
 }
 
 #[tauri::command]
@@ -67,16 +74,9 @@ pub fn x402_proxy_status() -> Option<u16> {
 }
 
 #[tauri::command]
-pub async fn x402_get_history(server_url: String) -> Result<serde_json::Value, String> {
-    let address = WalletManager::new().address()?;
-    let base = server_url.trim_end_matches('/');
-    let url = format!("{base}/v1/info/balance?address={address}");
-    let resp = reqwest::Client::new()
-        .get(&url)
-        .send()
-        .await
-        .map_err(|e| format!("history request: {e}"))?;
-    resp.json::<serde_json::Value>()
-        .await
-        .map_err(|e| format!("history decode: {e}"))
+pub fn x402_get_local_history(
+    state: State<'_, DbState>,
+    limit: Option<usize>,
+) -> Result<Vec<PayLogEntry>, String> {
+    state.0.get_pay_log(limit.unwrap_or(200)).map_err(|e| e.to_string())
 }

@@ -386,6 +386,8 @@ body {
 
 .tool-row:last-child { border-bottom: none; }
 
+.tool-row-dim { opacity: 0.55; }
+
 .tool-info { flex: 1; display: flex; flex-direction: column; gap: 2px; }
 
 .tool-name { font-size: 13px; font-weight: 500; color: var(--t1); }
@@ -395,6 +397,44 @@ body {
   font-size: 10.5px;
   color: var(--t3);
   font-family: "SF Mono", "Cascadia Code", ui-monospace, monospace;
+}
+
+/* Custom checkbox */
+.tool-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  border-radius: 4px;
+  border: 1.5px solid rgba(185, 150, 95, 0.50);
+  background: var(--surface);
+  cursor: pointer;
+  position: relative;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.tool-checkbox:checked {
+  background: var(--clay);
+  border-color: var(--clay);
+}
+
+.tool-checkbox:checked::after {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 1px;
+  width: 5px;
+  height: 9px;
+  border: 2px solid #fff;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg);
+}
+
+.tool-checkbox:disabled {
+  opacity: 0.35;
+  cursor: default;
 }
 
 /* ── Pills ────────────────────────────────────────────── */
@@ -477,74 +517,119 @@ body {
 .icon-btn:hover    { background: var(--border); color: var(--t2); }
 .icon-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
-/* ── History table ────────────────────────────────────── */
+/* ── Pay table ─────────────────────────────────────────── */
 
-.hist-header {
-  display: flex;
-  align-items: center;
-  padding: 6px 13px;
+.pay-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.pay-table thead tr {
   border-bottom: 1px solid var(--border);
+}
+
+.pay-table th {
+  padding: 5px 8px;
   font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   color: var(--t3);
-  gap: 8px;
+  text-align: right;
+  white-space: nowrap;
 }
 
-.hist-body { display: flex; flex-direction: column; }
+.pay-table th:first-child,
+.pay-table th:nth-child(2) { text-align: left; }
 
-.hist-row {
+.pay-table td {
+  padding: 8px 8px;
+  color: var(--t2);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  text-align: right;
+}
+
+.pay-table tr:last-child td { border-bottom: none; }
+
+.pay-td-time {
+  color: var(--t3) !important;
+  font-size: 10.5px;
+  text-align: left !important;
+  min-width: 52px;
+}
+
+.pay-td-model {
+  color: var(--t1) !important;
+  font-weight: 500;
+  text-align: left !important;
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pay-td-num { font-size: 11px; }
+
+.pay-td-cost {
+  color: var(--clay) !important;
+  font-weight: 500;
+}
+
+.inline-split {
+  display: flex;
+  justify-content: flex-end;
+  align-items: baseline;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.split-lbl {
+  font-size: 9px;
+  color: var(--t3);
+  margin-left: 1px;
+}
+
+.split-cached {
+  color: var(--t3);
+}
+
+.bal-refresh {
+  margin-left: 4px;
+  opacity: 0.5;
+  transition: opacity 0.15s;
+}
+
+.bal-refresh:hover { opacity: 1; }
+
+.bal-refresh-spin svg {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.pay-pager {
   display: flex;
   align-items: center;
-  padding: 9px 13px;
+  justify-content: flex-end;
   gap: 8px;
-  border-bottom: 1px solid var(--border);
-  font-size: 12px;
+  padding: 6px 13px;
+  border-top: 1px solid var(--border);
 }
 
-.hist-row:last-child { border-bottom: none; }
-
-.hist-time {
-  width: 58px;
-  flex-shrink: 0;
-  color: var(--t3);
+.pay-pager-count {
   font-size: 11px;
-  font-variant-numeric: tabular-nums;
-}
-
-.hist-info {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.hist-tool {
-  color: var(--t1);
-  font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.hist-model {
-  font-size: 10.5px;
   color: var(--t3);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-.hist-amount {
-  width: 72px;
-  flex-shrink: 0;
-  text-align: right;
-  color: var(--clay);
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
-  font-size: 11.5px;
+.pay-pager-info {
+  font-size: 11px;
+  color: var(--t3);
+  min-width: 32px;
+  text-align: center;
 }
 
 /* ── Wallet ───────────────────────────────────────────── */

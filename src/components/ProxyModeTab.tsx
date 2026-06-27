@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import {
   ToolDetection,
   detectTools,
-  getHistory,
+  getLocalHistory,
   proxyModeStatus,
   proxyStatus,
 } from "../lib/api";
@@ -65,17 +65,17 @@ export function ProxyModeTab({ serverUrl }: { serverUrl: string }) {
 
   // Payment history poll (15s when mode is on)
   useEffect(() => {
-    if (!modeOn || !serverUrl) { setRecentPays([]); return; }
+    if (!modeOn) { setRecentPays([]); return; }
     const load = async () => {
       try {
-        const raw = await getHistory(serverUrl);
+        const raw = await getLocalHistory(5);
         setRecentPays(extractRecords(raw, 5));
       } catch { /* ignore */ }
     };
     load();
     const id = setInterval(load, 15_000);
     return () => clearInterval(id);
-  }, [modeOn, serverUrl]);
+  }, [modeOn]);
 
   const installedCount = TOOLS.filter(t => detected[t.key]).length;
 

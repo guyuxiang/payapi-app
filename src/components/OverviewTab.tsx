@@ -6,7 +6,7 @@ import {
   WalletInfo,
   detectTools,
   getBalance,
-  getHistory,
+  getLocalHistory,
   getSetting,
   getWallet,
   proxyModeDisable,
@@ -25,7 +25,6 @@ import {
   recTimestamp,
   recTokens,
 } from "../lib/payrecord";
-import { ActivityGraph } from "./ActivityGraph";
 import { HourlyBucket, SpendingChart } from "./SpendingChart";
 
 // ── Network config ─────────────────────────────────────────
@@ -52,13 +51,6 @@ const IconPower = () => (
   <svg width="14" height="14" viewBox="0 0 14 14" fill="none"
     stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
     <path d="M7 1v5M4 3.2A5.5 5.5 0 107 13" />
-  </svg>
-);
-
-const IconChart = () => (
-  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"
-    stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="1,10 4,6 7,8 10,4 13,6" />
   </svg>
 );
 
@@ -225,11 +217,9 @@ export function OverviewTab({ serverUrl }: { serverUrl: string }) {
       .catch(() => {})
       .finally(() => setLoading(false));
 
-    if (serverUrl) {
-      getHistory(serverUrl)
-        .then((raw) => setRecords(extractRecords(raw, 200)))
-        .catch(() => {});
-    }
+    getLocalHistory(200)
+      .then((raw) => setRecords(extractRecords(raw, 200)))
+      .catch(() => {});
   }, [serverUrl]);
 
   // Proxy status poll (3s)
@@ -243,15 +233,14 @@ export function OverviewTab({ serverUrl }: { serverUrl: string }) {
 
   // History refresh (30s)
   useEffect(() => {
-    if (!serverUrl) return;
     const id = setInterval(async () => {
       try {
-        const raw = await getHistory(serverUrl);
+        const raw = await getLocalHistory(200);
         setRecords(extractRecords(raw, 200));
       } catch { /* ignore */ }
     }, 30_000);
     return () => clearInterval(id);
-  }, [serverUrl]);
+  }, []);
 
   // Latency check (30s)
   useEffect(() => {
@@ -335,7 +324,6 @@ export function OverviewTab({ serverUrl }: { serverUrl: string }) {
     ? `峰 ${peakBucket.amount} 次`
     : undefined;
   const lowBalance    = balNum !== null && balNum < 1;
-  const graphActive   = modeOn && !!proxyPort;
 
   return (
     <div className="panel">
@@ -396,20 +384,6 @@ export function OverviewTab({ serverUrl }: { serverUrl: string }) {
           </div>
           <p style={{ fontSize: 12, color: "var(--t3)" }}>
             {modeOn ? "AI 请求通过本地代理，按 USDC 按需结算" : "开启后自动配置已安装的 AI 编码工具"}
-          </p>
-        </div>
-      </div>
-
-      {/* ── Activity graph ── */}
-      <div className="card">
-        <div className="card-head">
-          <div className="ci ci-blue"><IconChart /></div>
-          <span className="card-title">请求活动</span>
-        </div>
-        <div className="card-body" style={{ gap: 8, paddingTop: 10, paddingBottom: 10 }}>
-          <ActivityGraph active={graphActive} color="#CE7044" height={64} />
-          <p className="graph-label">
-            {graphActive ? "代理运行中 — AI 请求实时监控" : "开启代理模式后显示活动曲线"}
           </p>
         </div>
       </div>

@@ -9,6 +9,14 @@ pub struct ProxyResponse {
     pub body: Vec<u8>,
     pub tx_hash: Option<String>,
     pub cost_usd: Option<String>,
+    // Token usage breakdown from X-Usage-* headers
+    pub usage_input: Option<i64>,
+    pub usage_cached: Option<i64>,
+    pub usage_output: Option<i64>,
+    // Per-million-token prices from X-Price-* headers (USD string)
+    pub price_input: Option<String>,
+    pub price_cached: Option<String>,
+    pub price_output: Option<String>,
 }
 
 pub async fn forward_with_x402(
@@ -78,6 +86,22 @@ async fn into_response(
         .and_then(|v| v.to_str().ok())
         .unwrap_or("application/json")
         .to_string();
+    let header_i64 = |name: &str| -> Option<i64> {
+        resp.headers().get(name)?.to_str().ok()?.parse().ok()
+    };
+    let header_str = |name: &str| -> Option<String> {
+        Some(resp.headers().get(name)?.to_str().ok()?.to_string())
+    };
+    let usage_input  = header_i64("x-usage-input");
+    let usage_cached = header_i64("x-usage-cached");
+    let usage_output = header_i64("x-usage-output");
+    let price_input  = header_str("x-price-input");
+    let price_cached = header_str("x-price-cached");
+    let price_output = header_str("x-price-output");
     let body = resp.bytes().await.map_err(|e| e.to_string())?.to_vec();
-    Ok(ProxyResponse { status, content_type, body, tx_hash, cost_usd })
+    Ok(ProxyResponse {
+        status, content_type, body, tx_hash, cost_usd,
+        usage_input, usage_cached, usage_output,
+        price_input, price_cached, price_output,
+    })
 }

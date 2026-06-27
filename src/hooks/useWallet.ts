@@ -6,7 +6,7 @@ import {
   createWallet,
   exportMnemonic,
   getBalance,
-  getHistory,
+  getLocalHistory,
   getWallet,
   importWallet,
 } from "../lib/api";
@@ -52,18 +52,16 @@ export function useWallet(serverUrl: string, network: string) {
   }, [wallet, fetchBalance]);
 
   const fetchHistory = useCallback(async () => {
-    if (!serverUrl) return;
     setLoadingHist(true);
     try {
-      setHistory(await getHistory(serverUrl));
-    } catch { /* server may not have history */ }
+      setHistory(await getLocalHistory(200));
+    } catch { /* ignore */ }
     finally { setLoadingHist(false); }
-  }, [serverUrl]);
+  }, []);
 
-  // Auto-load history when wallet is ready and serverUrl is set
   useEffect(() => {
-    if (wallet && serverUrl) fetchHistory();
-  }, [wallet, fetchHistory, serverUrl]);
+    if (wallet) fetchHistory();
+  }, [wallet, fetchHistory]);
 
   const handleCreate = async () => {
     try {
