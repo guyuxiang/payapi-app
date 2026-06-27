@@ -36,6 +36,7 @@ async fn proxy_handler(
     let path = uri.path();
     let target = format!("{}{}", state.server_url.trim_end_matches('/'), path);
 
+    log::info!("proxy_handler: {} {}", "POST", path);
     let signer = match WalletManager::new().signer() {
         Ok(s) => s,
         Err(e) => return error_response(StatusCode::BAD_REQUEST, &format!("wallet: {e}")),
@@ -57,6 +58,7 @@ async fn proxy_handler(
     match forward_with_x402(&state.client, &target, body_bytes, anthropic_version, &signer).await {
         Ok(resp) => {
             let duration_ms = t0.elapsed().as_millis() as i64;
+            log::info!("proxy_handler: {} {} -> status={} duration={}ms paid={}", "POST", path, resp.status, duration_ms, resp.tx_hash.is_some());
             // Log the payment locally if x402 was triggered (tx_hash is set).
             if resp.tx_hash.is_some() {
                 log_payment_local(&state.db, path, &headers, &body_snapshot, &resp, duration_ms);

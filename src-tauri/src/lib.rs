@@ -11,7 +11,9 @@ use store::{Db, db_path};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    log::info!("payapi-app starting, db={}", db_path().display());
     let db = Arc::new(Db::open(&db_path()).expect("open db"));
+    log::info!("db opened");
 
     // Re-apply proxy mode on startup if it was left enabled.
     proxy_mode::restore_on_startup(&db);
@@ -25,14 +27,26 @@ pub fn run() {
                 .flatten()
                 .and_then(|s| s.parse::<u16>().ok())
                 .unwrap_or(8402);
-            if let Err(e) = proxy::server::start(url, port, Arc::clone(&db)) {
-                log::warn!("auto-start proxy failed: {e}");
+            log::info!("auto-starting proxy on port {port} -> {url}");
+            match proxy::server::start(url, port, Arc::clone(&db)) {
+                Ok(p)  => log::info!("proxy started on port {p}"),
+                Err(e) => log::warn!("auto-start proxy failed: {e}"),
             }
         }
     }
 
     tauri::Builder::default()
-        .plugin(tauri_plugin_log::Builder::new().build())
+        .plugin(
+            tauri_plugin_log::Builder::new()
+                .level(log::LevelFilter::Info)
+                .target(tauri_plugin_log::Target::new(
+                    tauri_plugin_log::TargetKind::LogDir { file_name: Some("payapi".into()) },
+                ))
+                .target(tauri_plugin_log::Target::new(
+                    tauri_plugin_log::TargetKind::Stdout,
+                ))
+                .build(),
+        )
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .manage(DbState(Arc::clone(&db)))
