@@ -12,15 +12,13 @@ pub fn is_installed() -> bool {
 
 fn desktop_app_exists() -> bool {
     #[cfg(target_os = "macos")]
-    {
-        std::path::Path::new("/Applications/Codex.app").exists()
-    }
+    return std::path::Path::new("/Applications/Codex.app").exists();
+
     #[cfg(windows)]
-    {
-        dirs::data_local_dir()
-            .map(|d| d.join("Programs").join("Codex").join("Codex.exe").exists())
-            .unwrap_or(false)
-    }
+    return dirs::data_local_dir()
+        .map(|d| d.join("Programs").join("Codex").join("Codex.exe").exists())
+        .unwrap_or(false);
+
     #[allow(unreachable_code)]
     false
 }
