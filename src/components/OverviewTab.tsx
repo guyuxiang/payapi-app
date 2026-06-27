@@ -30,8 +30,8 @@ import { HourlyBucket, SpendingChart } from "./SpendingChart";
 // ── Network config ─────────────────────────────────────────
 
 const RPC: Record<string, string> = {
-  "base-sepolia": "https://sepolia.base.org",
-  "base":         "https://mainnet.base.org",
+  "base-sepolia": "https://base-sepolia-rpc.publicnode.com",
+  "base":         "https://base-rpc.publicnode.com",
 };
 const USDC: Record<string, string> = {
   "base-sepolia": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",

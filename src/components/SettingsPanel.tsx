@@ -168,7 +168,7 @@ export function SettingsPanel({ serverUrl, setServerUrl }: Props) {
         </div>
         <div className="card-body">
           <input className="input-field" type="text" defaultValue="8402" readOnly />
-          <p className="form-hint">ANTHROPIC_BASE_URL=http://127.0.0.1:8402</p>
+          <p className="form-hint">ANTHROPIC_BASE_URL=http://localhost:8402</p>
         </div>
       </div>
 

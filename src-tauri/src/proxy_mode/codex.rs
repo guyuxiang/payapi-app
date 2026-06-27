@@ -4,7 +4,7 @@ use crate::error::AppError;
 use serde_json::{json, Value};
 use std::path::PathBuf;
 
-const X402_PROXY_URL: &str = "http://127.0.0.1:8402";
+const X402_PROXY_URL: &str = "http://localhost:8402";
 
 pub fn is_installed() -> bool {
     binary_in_path("codex") || codex_dir().exists() || desktop_app_exists()

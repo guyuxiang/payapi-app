@@ -13,7 +13,7 @@ use crate::error::AppError;
 use serde_json::{json, Value};
 use std::path::PathBuf;
 
-const X402_PROXY_URL: &str = "http://127.0.0.1:8402";
+const X402_PROXY_URL: &str = "http://localhost:8402";
 const PROFILE_ID: &str = "00000000-0000-4000-8000-000000157210";
 const PROFILE_NAME: &str = "PayApi x402";
 const CONFIG_FILE: &str = "claude_desktop_config.json";
