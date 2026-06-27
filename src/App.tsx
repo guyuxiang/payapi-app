@@ -126,10 +126,14 @@ export default function App() {
           <span className="page-badge">PAYAPI</span>
         </header>
 
-        <div style={{ flex: 1, overflow: "auto" }}>
-          {tab === "overview"  && <OverviewTab   serverUrl={serverUrl} />}
-          {tab === "wallet"   && <WalletPanel   serverUrl={serverUrl} />}
-          {tab === "settings" && <SettingsPanel serverUrl={serverUrl} setServerUrl={handleSetServerUrl} />}
+        <div style={{ flex: 1, overflow: "auto", display: tab === "overview" ? undefined : "none" }}>
+          <OverviewTab serverUrl={serverUrl} active={tab === "overview"} />
+        </div>
+        <div style={{ flex: 1, overflow: "auto", display: tab === "wallet" ? undefined : "none" }}>
+          <WalletPanel serverUrl={serverUrl} active={tab === "wallet"} />
+        </div>
+        <div style={{ flex: 1, overflow: "auto", display: tab === "settings" ? undefined : "none" }}>
+          <SettingsPanel serverUrl={serverUrl} setServerUrl={handleSetServerUrl} active={tab === "settings"} />
         </div>
       </div>
     </div>

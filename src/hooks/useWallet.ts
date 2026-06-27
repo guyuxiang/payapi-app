@@ -21,7 +21,7 @@ const USDC: Record<string, string> = {
   "base": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
 };
 
-export function useWallet(serverUrl: string, network: string) {
+export function useWallet(serverUrl: string, network: string, active: boolean) {
   const [wallet,      setWallet]      = useState<WalletInfo | null>(null);
   const [balance,     setBalance]     = useState<BalanceInfo | null>(null);
   const [mnemonic,    setMnemonic]    = useState("");
@@ -48,8 +48,8 @@ export function useWallet(serverUrl: string, network: string) {
   }, [network]);
 
   useEffect(() => {
-    if (wallet) fetchBalance();
-  }, [wallet, fetchBalance]);
+    if (wallet && active) fetchBalance();
+  }, [wallet, active, fetchBalance]);
 
   const fetchHistory = useCallback(async () => {
     setLoadingHist(true);
@@ -60,8 +60,8 @@ export function useWallet(serverUrl: string, network: string) {
   }, []);
 
   useEffect(() => {
-    if (wallet) fetchHistory();
-  }, [wallet, fetchHistory]);
+    if (wallet && active) fetchHistory();
+  }, [wallet, active, fetchHistory]);
 
   const handleCreate = async () => {
     try {

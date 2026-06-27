@@ -66,9 +66,10 @@ const TOOLS: ToolMeta[] = [
 interface Props {
   serverUrl: string;
   setServerUrl: (v: string) => void;
+  active: boolean;
 }
 
-export function SettingsPanel({ serverUrl, setServerUrl }: Props) {
+export function SettingsPanel({ serverUrl, setServerUrl, active }: Props) {
   const [draft,        setDraft]        = useState(serverUrl);
   const [network,      setNetwork]      = useState("base-sepolia");
   const [detected,     setDetected]     = useState<ToolDetection>({
@@ -82,11 +83,12 @@ export function SettingsPanel({ serverUrl, setServerUrl }: Props) {
   useEffect(() => { setDraft(serverUrl); }, [serverUrl]);
 
   useEffect(() => {
+    if (!active) return;
     getSetting("network").then((v) => { if (v) setNetwork(v); }).catch(() => {});
     detectTools().then(setDetected).catch(() => {});
     proxyModeStatus().then(setModeOn).catch(() => {});
     getProxyTools().then((keys) => setEnabledTools(new Set(keys))).catch(() => {});
-  }, []);
+  }, [active]);
 
   const save = async () => {
     try {

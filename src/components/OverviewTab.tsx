@@ -7,6 +7,7 @@ import {
   detectTools,
   getBalance,
   getLocalHistory,
+  getProxyTools,
   getSetting,
   getWallet,
   proxyModeDisable,
@@ -166,7 +167,7 @@ function MiniStat({ title, value, sub, accent }: {
 
 // ── Main component ─────────────────────────────────────────
 
-export function OverviewTab({ serverUrl }: { serverUrl: string }) {
+export function OverviewTab({ serverUrl, active }: { serverUrl: string; active: boolean }) {
   // Wallet / balance
   const [wallet,  setWallet]  = useState<WalletInfo | null>(null);
   const [balance, setBalance] = useState<BalanceInfo | null>(null);
@@ -179,6 +180,7 @@ export function OverviewTab({ serverUrl }: { serverUrl: string }) {
   const [detected,      setDetected]      = useState<ToolDetection>({
     claude: false, claude_desktop: false, codex: false, gemini: false,
   });
+  const [enabledTools,  setEnabledTools]  = useState<Set<string>>(new Set());
   // Latency
   const [latencyMs, setLatencyMs] = useState<number | null>(null);
   const [latencyUp, setLatencyUp] = useState<boolean | null>(null);
@@ -188,6 +190,7 @@ export function OverviewTab({ serverUrl }: { serverUrl: string }) {
   // ── Init ────────────────────────────────────────────────
 
   useEffect(() => {
+    if (!active) return;
     setLoading(true);
     Promise.all([
       getSetting("network"),
@@ -195,12 +198,14 @@ export function OverviewTab({ serverUrl }: { serverUrl: string }) {
       proxyModeStatus(),
       detectTools(),
       proxyStatus(),
+      getProxyTools(),
     ])
-      .then(([net, w, mode, det, port]) => {
+      .then(([net, w, mode, det, port, tools]) => {
         const n = net ?? "base-sepolia";
         setWallet(w);
         setModeOn(mode);
         setDetected(det);
+        setEnabledTools(new Set(tools));
 
         if (port) {
           setProxyPort(port);
@@ -220,7 +225,7 @@ export function OverviewTab({ serverUrl }: { serverUrl: string }) {
     getLocalHistory(200)
       .then((raw) => setRecords(extractRecords(raw, 200)))
       .catch(() => {});
-  }, [serverUrl]);
+  }, [serverUrl, active]);
 
   // Proxy status poll (3s)
   useEffect(() => {
@@ -279,7 +284,10 @@ export function OverviewTab({ serverUrl }: { serverUrl: string }) {
         }
         await proxyModeEnable();
         setModeOn(true);
-        const names = TOOL_NAMES.filter(t => detected[t.key]).map(t => t.name).join("、");
+        const names = TOOL_NAMES
+          .filter((t) => detected[t.key] && enabledTools.has(t.key))
+          .map((t) => t.name)
+          .join("、");
         toast.success(`代理已开启${names ? " — " + names : ""}`);
       } else {
         await proxyModeDisable();

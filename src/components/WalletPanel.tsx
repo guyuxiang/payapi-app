@@ -94,7 +94,7 @@ const USDC_ADDR: Record<string, string> = {
 
 type Pane = null | "send" | "receive";
 
-export function WalletPanel({ serverUrl }: { serverUrl: string }) {
+export function WalletPanel({ serverUrl, active }: { serverUrl: string; active: boolean }) {
   const [network, setNetwork] = useState("base-sepolia");
 
   useEffect(() => {
@@ -105,7 +105,7 @@ export function WalletPanel({ serverUrl }: { serverUrl: string }) {
     wallet, balance, mnemonic, showMnemonic, setShowMnemonic,
     history, loadingBal, loadingHist, importText, setImportText,
     fetchBalance, fetchHistory, handleCreate, handleImport, handleExport,
-  } = useWallet(serverUrl, network);
+  } = useWallet(serverUrl, network, active);
 
   const handleNetworkChange = (v: string) => {
     setNetwork(v);

@@ -9,14 +9,14 @@ interface Props {
   data: HourlyBucket[];
   color?: string;
   height?: number;
-  highlightPeak?: boolean; // dot on peak bucket instead of last non-zero
-  topLabel?: string;       // small text at top-left, e.g. "峰 12 次"
+  highlightPeak?: boolean;
+  topLabel?: string;
 }
 
 export function SpendingChart({
   data,
-  color = "#0066CC",
-  height = 80,
+  color = "#2C68B5",
+  height = 84,
   highlightPeak = false,
   topLabel,
 }: Props) {
@@ -28,144 +28,201 @@ export function SpendingChart({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const W = canvas.width;
-    const H = canvas.height;
-    const PAD_T = 8, PAD_B = 32, PAD_L = 4, PAD_R = 4;
+    const cssWidth = canvas.clientWidth || 320;
+    const cssHeight = height;
+    const dpr = Math.max(window.devicePixelRatio || 1, 1);
+
+    canvas.width = Math.round(cssWidth * dpr);
+    canvas.height = Math.round(cssHeight * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const W = cssWidth;
+    const H = cssHeight;
+    const PAD_T = 14;
+    const PAD_R = 10;
+    const PAD_B = 22;
+    const PAD_L = 10;
     const plotW = W - PAD_L - PAD_R;
     const plotH = H - PAD_T - PAD_B;
 
-    const rawMax = Math.max(...data.map(d => d.amount));
-    const hasData = rawMax > 0;
-    const maxVal  = hasData ? rawMax * 1.15 : 1;
-    const n       = data.length;
-
     ctx.clearRect(0, 0, W, H);
 
-    // Grid lines
-    ctx.strokeStyle = "rgba(185,150,95,0.18)";
-    ctx.lineWidth   = 1;
+    const n = data.length;
+    const rawMax = Math.max(0, ...data.map((d) => d.amount));
+    const hasData = rawMax > 0;
+    const maxVal = hasData ? Math.max(3, rawMax) : 1;
+
+    const getX = (i: number) => PAD_L + (plotW * i) / Math.max(1, n - 1);
+    const getY = (v: number) => PAD_T + plotH * (1 - v / maxVal);
+
+    // Background plot wash
+    const bg = ctx.createLinearGradient(0, PAD_T, 0, PAD_T + plotH);
+    bg.addColorStop(0, "rgba(44,104,181,0.05)");
+    bg.addColorStop(1, "rgba(44,104,181,0.00)");
+    ctx.fillStyle = bg;
+    ctx.fillRect(PAD_L, PAD_T, plotW, plotH);
+
+    // Grid
+    ctx.lineWidth = 1;
     for (let i = 0; i <= 3; i++) {
       const y = PAD_T + (plotH / 3) * i;
       ctx.beginPath();
       ctx.moveTo(PAD_L, y);
       ctx.lineTo(W - PAD_R, y);
+      ctx.strokeStyle = i === 3 ? "rgba(135,118,92,0.16)" : "rgba(135,118,92,0.10)";
+      ctx.stroke();
+    }
+    for (let i = 1; i <= 2; i++) {
+      const x = PAD_L + (plotW / 3) * i;
+      ctx.beginPath();
+      ctx.moveTo(x, PAD_T);
+      ctx.lineTo(x, PAD_T + plotH);
+      ctx.strokeStyle = "rgba(135,118,92,0.07)";
       ctx.stroke();
     }
 
     if (n < 2) return;
 
-    const getX = (i: number) => PAD_L + i * (plotW / (n - 1));
-    const getY = (v: number) => hasData
-      ? PAD_T + plotH * (1 - v / maxVal)
-      : PAD_T + plotH;
+    const points = data.map((d, i) => ({ x: getX(i), y: getY(d.amount), v: d.amount }));
 
-    // Gradient fill
-    ctx.beginPath();
-    ctx.moveTo(getX(0), H - PAD_B);
-    for (let i = 0; i < n; i++) ctx.lineTo(getX(i), getY(data[i].amount));
-    ctx.lineTo(getX(n - 1), H - PAD_B);
+    const tracePath = () => {
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      for (let i = 0; i < points.length - 1; i++) {
+        const p = points[i];
+        const next = points[i + 1];
+        const mx = (p.x + next.x) / 2;
+        const my = (p.y + next.y) / 2;
+        ctx.quadraticCurveTo(p.x, p.y, mx, my);
+      }
+      const last = points[points.length - 1];
+      ctx.lineTo(last.x, last.y);
+    };
+
+    // Area
+    tracePath();
+    ctx.lineTo(points[points.length - 1].x, PAD_T + plotH);
+    ctx.lineTo(points[0].x, PAD_T + plotH);
     ctx.closePath();
-    const grad = ctx.createLinearGradient(0, PAD_T, 0, H - PAD_B);
-    grad.addColorStop(0, color + "38");
-    grad.addColorStop(1, color + "00");
-    ctx.fillStyle = grad;
+    const area = ctx.createLinearGradient(0, PAD_T, 0, PAD_T + plotH);
+    area.addColorStop(0, "rgba(44,104,181,0.24)");
+    area.addColorStop(0.6, "rgba(44,104,181,0.08)");
+    area.addColorStop(1, "rgba(44,104,181,0.00)");
+    ctx.fillStyle = area;
     ctx.fill();
 
-    // Line
-    ctx.beginPath();
-    for (let i = 0; i < n; i++) {
-      i === 0
-        ? ctx.moveTo(getX(i), getY(data[i].amount))
-        : ctx.lineTo(getX(i), getY(data[i].amount));
-    }
-    ctx.strokeStyle = color;
-    ctx.lineWidth   = 2.5;
-    ctx.lineJoin    = "round";
-    ctx.lineCap     = "round";
+    // Line shadow
+    tracePath();
+    ctx.strokeStyle = "rgba(44,104,181,0.16)";
+    ctx.lineWidth = 6;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
     ctx.stroke();
 
-    // Highlight dot
-    if (hasData) {
-      let dotIdx = -1;
-      if (highlightPeak) {
-        // peak bucket
-        let peak = 0;
-        for (let i = 0; i < n; i++) {
-          if (data[i].amount > peak) { peak = data[i].amount; dotIdx = i; }
-        }
-      } else {
-        // last non-zero bucket
-        for (let i = n - 1; i >= 0; i--) {
-          if (data[i].amount > 0) { dotIdx = i; break; }
-        }
-      }
-      if (dotIdx >= 0) {
-        const dx = getX(dotIdx);
-        const dy = getY(data[dotIdx].amount);
-        // Outer ring (subtle glow)
-        ctx.beginPath();
-        ctx.arc(dx, dy, 8, 0, Math.PI * 2);
-        ctx.fillStyle = color + "22";
-        ctx.fill();
-        // Filled dot
-        ctx.beginPath();
-        ctx.arc(dx, dy, 5, 0, Math.PI * 2);
-        ctx.fillStyle = color;
-        ctx.fill();
-        // White inner
-        ctx.beginPath();
-        ctx.arc(dx, dy, 2.5, 0, Math.PI * 2);
-        ctx.fillStyle = "#FAF7EE";
-        ctx.fill();
+    // Main line
+    tracePath();
+    const line = ctx.createLinearGradient(PAD_L, 0, W - PAD_R, 0);
+    line.addColorStop(0, "rgba(44,104,181,0.78)");
+    line.addColorStop(1, color);
+    ctx.strokeStyle = line;
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.stroke();
 
-        // Callout label above peak dot
-        if (highlightPeak && data[dotIdx].amount > 0) {
-          const label = `${data[dotIdx].amount}`;
-          ctx.font      = "bold 24px -apple-system, system-ui, sans-serif";
-          ctx.textAlign = dotIdx > n * 0.75 ? "right" : "left";
-          ctx.textBaseline = "alphabetic";
-          ctx.fillStyle = color;
-          const lx = dotIdx > n * 0.75 ? dx - 12 : dx + 12;
-          ctx.fillText(label, lx, dy - 10);
-        }
+    // Peak + latest markers
+    let peakIdx = 0;
+    for (let i = 1; i < data.length; i++) {
+      if (data[i].amount > data[peakIdx].amount) peakIdx = i;
+    }
+    const latestIdx = data.length - 1;
+
+    const drawDot = (idx: number, fill: string, ring: string, radius: number) => {
+      const p = points[idx];
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, radius + 4, 0, Math.PI * 2);
+      ctx.fillStyle = ring;
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+      ctx.fillStyle = fill;
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 2.2, 0, Math.PI * 2);
+      ctx.fillStyle = "#FFFFFF";
+      ctx.fill();
+    };
+
+    if (hasData && data[peakIdx].amount > 0) {
+      if (highlightPeak) {
+        drawDot(peakIdx, "#BD6A2C", "rgba(189,106,44,0.18)", 4.6);
       }
+      drawDot(latestIdx, color, "rgba(44,104,181,0.18)", 4.2);
     }
 
-    // X-axis time labels
-    ctx.fillStyle    = "rgba(17,17,20,0.30)";
-    ctx.font         = "bold 22px -apple-system, system-ui, sans-serif";
+    // Peak callout chip
+    if (topLabel) {
+      const text = topLabel;
+      ctx.font = "600 11px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+      const w = ctx.measureText(text).width + 14;
+      const x = PAD_L + 2;
+      const y = 4;
+      const h = 20;
+      const r = 10;
+
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+      ctx.fillStyle = "rgba(255,250,240,0.96)";
+      ctx.fill();
+      ctx.strokeStyle = "rgba(189,106,44,0.16)";
+      ctx.stroke();
+
+      ctx.fillStyle = "#9D5B27";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.fillText(text, x + 8, y + h / 2 + 0.5);
+    }
+
+    // Max label
+    if (hasData) {
+      ctx.fillStyle = "rgba(17,17,20,0.30)";
+      ctx.font = "600 10px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+      ctx.textAlign = "right";
+      ctx.textBaseline = "middle";
+      ctx.fillText(`${rawMax} 次`, W - PAD_R, PAD_T + 1);
+    }
+
+    // X-axis labels
+    ctx.fillStyle = "rgba(17,17,20,0.34)";
+    ctx.font = "600 10px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
     ctx.textBaseline = "alphabetic";
-    const labelIdxs: [number, "left" | "center" | "right"][] = [
+    const ticks: [number, CanvasTextAlign][] = [
       [0, "left"],
-      [6, "center"],
-      [12, "center"],
-      [18, "center"],
+      [Math.floor((n - 1) / 2), "center"],
       [n - 1, "right"],
     ];
-    for (const [i, align] of labelIdxs) {
-      if (i < n) {
-        ctx.textAlign = align;
-        const x = align === "left" ? getX(i) + 2 : align === "right" ? getX(i) - 2 : getX(i);
-        ctx.fillText(data[i].label, x, H - 6);
-      }
+    for (const [idx, align] of ticks) {
+      const p = points[idx];
+      ctx.textAlign = align;
+      ctx.fillText(data[idx].label, p.x, H - 5);
     }
 
-    // Optional top-left label
-    if (topLabel) {
-      ctx.font         = "600 20px -apple-system, system-ui, sans-serif";
-      ctx.textAlign    = "left";
-      ctx.textBaseline = "top";
-      ctx.fillStyle    = "rgba(17,17,20,0.28)";
-      ctx.fillText(topLabel, PAD_L + 2, PAD_T + 2);
+    // Empty-state label
+    if (!hasData) {
+      ctx.fillStyle = "rgba(17,17,20,0.24)";
+      ctx.font = "600 11px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("近 24 小时暂无请求", W / 2, PAD_T + plotH / 2);
     }
-  }, [data, color, highlightPeak, topLabel]);
+  }, [data, color, height, highlightPeak, topLabel]);
 
-  return (
-    <canvas
-      ref={canvasRef}
-      width={800}
-      height={height * 2}
-      style={{ width: "100%", height, display: "block" }}
-    />
-  );
+  return <canvas ref={canvasRef} style={{ width: "100%", height, display: "block" }} />;
 }

@@ -15,7 +15,7 @@ use std::path::PathBuf;
 
 const X402_PROXY_URL: &str = "http://localhost:8402";
 const PROFILE_ID: &str = "00000000-0000-4000-8000-000000157210";
-const PROFILE_NAME: &str = "PayApi x402";
+const PROFILE_NAME: &str = "PAYAPI x402";
 const CONFIG_FILE: &str = "claude_desktop_config.json";
 const CONFIG_LIB_DIR: &str = "configLibrary";
 
@@ -111,10 +111,10 @@ fn build_profile() -> Value {
         "disableDeploymentModeChooser": true,
         "coworkEgressAllowedHosts": ["*"],
         "inferenceModels": [
-            { "name": "claude-sonnet-4-6",        "labelOverride": "claude-sonnet-4-6 (PayApi x402)",  "supports1m": true  },
-            { "name": "claude-opus-4-8",           "labelOverride": "claude-opus-4-8 (PayApi x402)",   "supports1m": true  },
-            { "name": "claude-haiku-4-5-20251001", "labelOverride": "claude-haiku-4-5 (PayApi x402)",  "supports1m": true  },
-            { "name": "claude-fable-5",            "labelOverride": "claude-fable-5 (PayApi x402)",    "supports1m": true  }
+            { "name": "claude-sonnet-4-6",        "labelOverride": "claude-sonnet-4-6 (PAYAPI x402)",  "supports1m": true  },
+            { "name": "claude-opus-4-8",           "labelOverride": "claude-opus-4-8 (PAYAPI x402)",   "supports1m": true  },
+            { "name": "claude-haiku-4-5-20251001", "labelOverride": "claude-haiku-4-5 (PAYAPI x402)",  "supports1m": true  },
+            { "name": "claude-fable-5",            "labelOverride": "claude-fable-5 (PAYAPI x402)",    "supports1m": true  }
         ]
     })
 }
