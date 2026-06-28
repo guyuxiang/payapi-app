@@ -35,12 +35,22 @@ pub async fn forward_with_x402(
     }
 
     let challenge = first.bytes().await.map_err(|e| e.to_string())?;
-    let SignedPayment { header, request_id, amount_usd } =
-        payment::sign_challenge(&challenge, signer)?;
+    let SignedPayment {
+        header,
+        request_id,
+        amount_usd,
+    } = payment::sign_challenge(&challenge, signer)?;
 
-    let paid = post(client, url, &body, anthropic_version, Some(&header), Some(&request_id))
-        .await
-        .map_err(|e| format!("retry: {e}"))?;
+    let paid = post(
+        client,
+        url,
+        &body,
+        anthropic_version,
+        Some(&header),
+        Some(&request_id),
+    )
+    .await
+    .map_err(|e| format!("retry: {e}"))?;
 
     let tx = paid
         .headers()
@@ -86,22 +96,29 @@ async fn into_response(
         .and_then(|v| v.to_str().ok())
         .unwrap_or("application/json")
         .to_string();
-    let header_i64 = |name: &str| -> Option<i64> {
-        resp.headers().get(name)?.to_str().ok()?.parse().ok()
-    };
+    let header_i64 =
+        |name: &str| -> Option<i64> { resp.headers().get(name)?.to_str().ok()?.parse().ok() };
     let header_str = |name: &str| -> Option<String> {
         Some(resp.headers().get(name)?.to_str().ok()?.to_string())
     };
-    let usage_input  = header_i64("x-usage-input");
+    let usage_input = header_i64("x-usage-input");
     let usage_cached = header_i64("x-usage-cached");
     let usage_output = header_i64("x-usage-output");
-    let price_input  = header_str("x-price-input");
+    let price_input = header_str("x-price-input");
     let price_cached = header_str("x-price-cached");
     let price_output = header_str("x-price-output");
     let body = resp.bytes().await.map_err(|e| e.to_string())?.to_vec();
     Ok(ProxyResponse {
-        status, content_type, body, tx_hash, cost_usd,
-        usage_input, usage_cached, usage_output,
-        price_input, price_cached, price_output,
+        status,
+        content_type,
+        body,
+        tx_hash,
+        cost_usd,
+        usage_input,
+        usage_cached,
+        usage_output,
+        price_input,
+        price_cached,
+        price_output,
     })
 }

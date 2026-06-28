@@ -9,16 +9,12 @@ interface Props {
   data: HourlyBucket[];
   color?: string;
   height?: number;
-  highlightPeak?: boolean;
-  topLabel?: string;
 }
 
 export function SpendingChart({
   data,
   color = "#2C68B5",
   height = 84,
-  highlightPeak = false,
-  topLabel,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -130,11 +126,7 @@ export function SpendingChart({
     ctx.lineJoin = "round";
     ctx.stroke();
 
-    // Peak + latest markers
-    let peakIdx = 0;
-    for (let i = 1; i < data.length; i++) {
-      if (data[i].amount > data[peakIdx].amount) peakIdx = i;
-    }
+    // Latest marker
     const latestIdx = data.length - 1;
 
     const drawDot = (idx: number, fill: string, ring: string, radius: number) => {
@@ -155,39 +147,8 @@ export function SpendingChart({
       ctx.fill();
     };
 
-    if (hasData && data[peakIdx].amount > 0) {
-      if (highlightPeak) {
-        drawDot(peakIdx, "#BD6A2C", "rgba(189,106,44,0.18)", 4.6);
-      }
+    if (hasData) {
       drawDot(latestIdx, color, "rgba(44,104,181,0.18)", 4.2);
-    }
-
-    // Peak callout chip
-    if (topLabel) {
-      const text = topLabel;
-      ctx.font = "600 11px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
-      const w = ctx.measureText(text).width + 14;
-      const x = PAD_L + 2;
-      const y = 4;
-      const h = 20;
-      const r = 10;
-
-      ctx.beginPath();
-      ctx.moveTo(x + r, y);
-      ctx.arcTo(x + w, y, x + w, y + h, r);
-      ctx.arcTo(x + w, y + h, x, y + h, r);
-      ctx.arcTo(x, y + h, x, y, r);
-      ctx.arcTo(x, y, x + w, y, r);
-      ctx.closePath();
-      ctx.fillStyle = "rgba(255,250,240,0.96)";
-      ctx.fill();
-      ctx.strokeStyle = "rgba(189,106,44,0.16)";
-      ctx.stroke();
-
-      ctx.fillStyle = "#9D5B27";
-      ctx.textAlign = "left";
-      ctx.textBaseline = "middle";
-      ctx.fillText(text, x + 8, y + h / 2 + 0.5);
     }
 
     // Max label
@@ -222,7 +183,7 @@ export function SpendingChart({
       ctx.textBaseline = "middle";
       ctx.fillText("近 24 小时暂无请求", W / 2, PAD_T + plotH / 2);
     }
-  }, [data, color, height, highlightPeak, topLabel]);
+  }, [data, color, height]);
 
   return <canvas ref={canvasRef} style={{ width: "100%", height, display: "block" }} />;
 }

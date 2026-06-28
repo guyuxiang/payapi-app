@@ -58,7 +58,10 @@ impl WalletManager {
 
     pub fn load_info(&self) -> Result<WalletInfo, String> {
         let f = self.read_file()?;
-        Ok(WalletInfo { address: f.address, created_at: f.created_at })
+        Ok(WalletInfo {
+            address: f.address,
+            created_at: f.created_at,
+        })
     }
 
     pub fn export(&self) -> Result<String, String> {
@@ -98,7 +101,10 @@ impl WalletManager {
         let json = serde_json::to_string_pretty(&file).map_err(|e| e.to_string())?;
         std::fs::write(&self.path, json).map_err(|e| format!("write wallet: {e}"))?;
         self.restrict_permissions();
-        Ok(WalletInfo { address, created_at })
+        Ok(WalletInfo {
+            address,
+            created_at,
+        })
     }
 
     fn read_file(&self) -> Result<WalletFile, String> {

@@ -35,20 +35,22 @@ export function useWallet(serverUrl: string, network: string, active: boolean) {
     getWallet().then(setWallet).catch(() => {});
   }, []);
 
-  const fetchBalance = useCallback(async () => {
+  const fetchBalance = useCallback(async (opts?: { silent?: boolean }) => {
     setLoadingBal(true);
     try {
       const b = await getBalance(RPC[network] ?? RPC["base-sepolia"], USDC[network] ?? USDC["base-sepolia"]);
       setBalance(b);
     } catch (e) {
-      toast.error("余额查询失败: " + extractError(e));
+      if (!opts?.silent) {
+        toast.error("余额暂时无法刷新，请稍后重试");
+      }
     } finally {
       setLoadingBal(false);
     }
   }, [network]);
 
   useEffect(() => {
-    if (wallet && active) fetchBalance();
+    if (wallet && active) fetchBalance({ silent: true });
   }, [wallet, active, fetchBalance]);
 
   const fetchHistory = useCallback(async () => {

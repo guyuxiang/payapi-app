@@ -141,7 +141,7 @@ export function WalletPanel({ serverUrl, active }: { serverUrl: string; active: 
       );
       toast.success(`发送成功 — ${txHash.slice(0, 12)}...`);
       setSendTo(""); setSendAmount(""); setPane(null);
-      fetchBalance();
+      fetchBalance({ silent: true });
     } catch (e) {
       toast.error("发送失败: " + extractError(e));
     } finally {
@@ -239,7 +239,7 @@ export function WalletPanel({ serverUrl, active }: { serverUrl: string; active: 
                 <span className="balance-nil">—</span>
               )}
               <button className={`icon-btn bal-refresh${loadingBal ? " bal-refresh-spin" : ""}`}
-                onClick={fetchBalance} disabled={loadingBal} title="刷新余额">
+                onClick={() => fetchBalance()} disabled={loadingBal} title="刷新余额">
                 <IconRefresh />
               </button>
             </div>

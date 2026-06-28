@@ -724,9 +724,10 @@ body {
 
 .receive-meta {
   display: flex;
-  flex-direction: column;
-  gap: 5px;
-  align-items: flex-start;
+  flex-direction: row;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: nowrap;
 }
 
 .receive-tag {

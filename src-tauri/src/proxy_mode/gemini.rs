@@ -4,19 +4,14 @@ use crate::error::AppError;
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-const X402_PROXY_URL: &str = "http://localhost:8402";
+use super::X402_PROXY_URL;
 
 pub fn is_installed() -> bool {
     binary_in_path("gemini") || gemini_dir().exists()
 }
 
 fn binary_in_path(name: &str) -> bool {
-    #[cfg(windows)]
-    let checker = "where";
-    #[cfg(not(windows))]
-    let checker = "which";
-    std::process::Command::new(checker).arg(name).output()
-        .map(|o| o.status.success()).unwrap_or(false)
+    super::util::binary_in_path(name)
 }
 
 pub fn gemini_dir() -> PathBuf {
@@ -43,7 +38,10 @@ pub fn restore_config_json(json_str: &str) -> Result<(), AppError> {
 pub fn apply_x402() -> Result<(), AppError> {
     let mut map = read_env_map().unwrap_or_default();
     map.insert("GEMINI_API_KEY".to_string(), "x402".to_string());
-    map.insert("GOOGLE_GEMINI_BASE_URL".to_string(), X402_PROXY_URL.to_string());
+    map.insert(
+        "GOOGLE_GEMINI_BASE_URL".to_string(),
+        X402_PROXY_URL.to_string(),
+    );
     write_env_map(&map)
 }
 

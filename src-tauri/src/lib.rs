@@ -7,7 +7,7 @@ mod wallet;
 
 use commands::proxy_mode::DbState;
 use std::sync::Arc;
-use store::{Db, db_path};
+use store::{db_path, Db};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -29,7 +29,7 @@ pub fn run() {
                 .unwrap_or(8402);
             log::info!("auto-starting proxy on port {port} -> {url}");
             match proxy::server::start(url, port, Arc::clone(&db)) {
-                Ok(p)  => log::info!("proxy started on port {p}"),
+                Ok(p) => log::info!("proxy started on port {p}"),
                 Err(e) => log::warn!("auto-start proxy failed: {e}"),
             }
         }
@@ -40,7 +40,9 @@ pub fn run() {
             tauri_plugin_log::Builder::new()
                 .level(log::LevelFilter::Info)
                 .target(tauri_plugin_log::Target::new(
-                    tauri_plugin_log::TargetKind::LogDir { file_name: Some("payapi".into()) },
+                    tauri_plugin_log::TargetKind::LogDir {
+                        file_name: Some("payapi".into()),
+                    },
                 ))
                 .target(tauri_plugin_log::Target::new(
                     tauri_plugin_log::TargetKind::Stdout,
@@ -79,9 +81,3 @@ pub fn run() {
         .run(tauri::generate_context!())
         .expect("error running tauri application");
 }
-
-
-
-
-
-

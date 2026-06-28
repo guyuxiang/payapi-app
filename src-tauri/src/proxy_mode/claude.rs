@@ -4,19 +4,18 @@ use crate::error::AppError;
 use serde_json::{json, Value};
 use std::path::PathBuf;
 
-const X402_PROXY_URL: &str = "http://localhost:8402";
+use super::X402_PROXY_URL;
 
 pub fn is_installed() -> bool {
-    binary_in_path("claude") || settings_path().parent().map(|p| p.exists()).unwrap_or(false)
+    binary_in_path("claude")
+        || settings_path()
+            .parent()
+            .map(|p| p.exists())
+            .unwrap_or(false)
 }
 
 fn binary_in_path(name: &str) -> bool {
-    #[cfg(windows)]
-    let checker = "where";
-    #[cfg(not(windows))]
-    let checker = "which";
-    std::process::Command::new(checker).arg(name).output()
-        .map(|o| o.status.success()).unwrap_or(false)
+    super::util::binary_in_path(name)
 }
 
 pub fn settings_path() -> PathBuf {

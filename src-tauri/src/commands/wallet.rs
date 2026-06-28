@@ -46,12 +46,19 @@ pub fn x402_get_address() -> Result<String, String> {
 }
 
 #[tauri::command]
-pub async fn x402_get_balance(rpc_url: String, usdc_address: String) -> Result<BalanceInfo, String> {
+pub async fn x402_get_balance(
+    rpc_url: String,
+    usdc_address: String,
+) -> Result<BalanceInfo, String> {
     let address_str = WalletManager::new().address()?;
     let holder = Address::from_str(&address_str).map_err(|e| e.to_string())?;
     let usdc = Address::from_str(&usdc_address).map_err(|e| format!("bad usdc address: {e}"))?;
     let raw = usdc_balance(&rpc_url, usdc, holder).await?;
-    Ok(BalanceInfo { address: address_str, raw: raw.to_string(), usdc: format_usdc(raw) })
+    Ok(BalanceInfo {
+        address: address_str,
+        raw: raw.to_string(),
+        usdc: format_usdc(raw),
+    })
 }
 
 #[tauri::command]
@@ -60,7 +67,11 @@ pub fn x402_start_proxy(
     server_url: String,
     port: Option<u16>,
 ) -> Result<u16, String> {
-    crate::proxy::server::start(server_url, port.unwrap_or(8402), std::sync::Arc::clone(&state.0))
+    crate::proxy::server::start(
+        server_url,
+        port.unwrap_or(8402),
+        std::sync::Arc::clone(&state.0),
+    )
 }
 
 #[tauri::command]
@@ -78,5 +89,8 @@ pub fn x402_get_local_history(
     state: State<'_, DbState>,
     limit: Option<usize>,
 ) -> Result<Vec<PayLogEntry>, String> {
-    state.0.get_pay_log(limit.unwrap_or(200)).map_err(|e| e.to_string())
+    state
+        .0
+        .get_pay_log(limit.unwrap_or(200))
+        .map_err(|e| e.to_string())
 }

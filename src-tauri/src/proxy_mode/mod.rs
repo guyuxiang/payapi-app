@@ -18,15 +18,25 @@ const BACKUP_CLAUDE_DESKTOP: &str = "backup_claude_desktop";
 const BACKUP_CODEX: &str = "backup_codex";
 const BACKUP_GEMINI: &str = "backup_gemini";
 
+#[cfg(windows)]
+pub(super) const X402_PROXY_URL: &str = "http://localhost:8402";
+#[cfg(not(windows))]
+pub(super) const X402_PROXY_URL: &str = "http://127.0.0.1:8402";
+
 /// Returns the user-selected tool keys, defaulting to all tools.
 pub fn get_enabled_tools(db: &Arc<Db>) -> Vec<String> {
     db.get_setting(SETTING_TOOLS)
         .ok()
         .flatten()
         .and_then(|s| serde_json::from_str::<Vec<String>>(&s).ok())
-        .unwrap_or_else(|| vec![
-            "claude".into(), "claude_desktop".into(), "codex".into(), "gemini".into(),
-        ])
+        .unwrap_or_else(|| {
+            vec![
+                "claude".into(),
+                "claude_desktop".into(),
+                "codex".into(),
+                "gemini".into(),
+            ]
+        })
 }
 
 pub fn set_enabled_tools(db: &Arc<Db>, tools: &[String]) -> Result<(), AppError> {
@@ -144,10 +154,18 @@ fn backup_selected(db: &Arc<Db>, tools: &[String]) -> Result<(), AppError> {
 }
 
 fn apply_selected(tools: &[String]) -> Result<(), AppError> {
-    if tools.contains(&"claude".into()) && claude::is_installed() { claude::apply_x402()?; }
-    if tools.contains(&"claude_desktop".into()) && claude_desktop::is_installed() { claude_desktop::apply_x402()?; }
-    if tools.contains(&"codex".into()) && codex::is_installed() { codex::apply_x402()?; }
-    if tools.contains(&"gemini".into()) && gemini::is_installed() { gemini::apply_x402()?; }
+    if tools.contains(&"claude".into()) && claude::is_installed() {
+        claude::apply_x402()?;
+    }
+    if tools.contains(&"claude_desktop".into()) && claude_desktop::is_installed() {
+        claude_desktop::apply_x402()?;
+    }
+    if tools.contains(&"codex".into()) && codex::is_installed() {
+        codex::apply_x402()?;
+    }
+    if tools.contains(&"gemini".into()) && gemini::is_installed() {
+        gemini::apply_x402()?;
+    }
     Ok(())
 }
 

@@ -1,2 +1,2 @@
 pub mod db;
-pub use db::{Db, NewPayLog, db_path};
+pub use db::{db_path, Db, NewPayLog};

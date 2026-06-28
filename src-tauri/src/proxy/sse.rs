@@ -33,11 +33,17 @@ pub fn responses_to_sse(full: &Value) -> Vec<u8> {
     shell["status"] = json!("in_progress");
     shell["output"] = json!([]);
     shell["completed_at"] = Value::Null;
-    push(&mut out, "response.created",
-        &json!({ "type": "response.created", "sequence_number": seq, "response": shell }));
+    push(
+        &mut out,
+        "response.created",
+        &json!({ "type": "response.created", "sequence_number": seq, "response": shell }),
+    );
     seq += 1;
-    push(&mut out, "response.in_progress",
-        &json!({ "type": "response.in_progress", "sequence_number": seq, "response": shell }));
+    push(
+        &mut out,
+        "response.in_progress",
+        &json!({ "type": "response.in_progress", "sequence_number": seq, "response": shell }),
+    );
     seq += 1;
 
     // 2. Replay each output item.
@@ -52,9 +58,12 @@ pub fn responses_to_sse(full: &Value) -> Vec<u8> {
             if added.get("content").is_some() {
                 added["content"] = json!([]);
             }
-            push(&mut out, "response.output_item.added",
+            push(
+                &mut out,
+                "response.output_item.added",
                 &json!({ "type": "response.output_item.added", "output_index": output_index,
-                         "sequence_number": seq, "item": added }));
+                         "sequence_number": seq, "item": added }),
+            );
             seq += 1;
 
             // Message items emit their text content as part + delta + done events.
@@ -70,44 +79,62 @@ pub fn responses_to_sse(full: &Value) -> Vec<u8> {
 
                         let mut empty = part.clone();
                         empty["text"] = json!("");
-                        push(&mut out, "response.content_part.added",
+                        push(
+                            &mut out,
+                            "response.content_part.added",
                             &json!({ "type": "response.content_part.added", "content_index": content_index,
                                      "item_id": item_id, "output_index": output_index,
-                                     "sequence_number": seq, "part": empty }));
+                                     "sequence_number": seq, "part": empty }),
+                        );
                         seq += 1;
 
-                        push(&mut out, "response.output_text.delta",
+                        push(
+                            &mut out,
+                            "response.output_text.delta",
                             &json!({ "type": "response.output_text.delta", "content_index": content_index,
                                      "delta": text, "item_id": item_id, "output_index": output_index,
-                                     "sequence_number": seq }));
+                                     "sequence_number": seq }),
+                        );
                         seq += 1;
 
-                        push(&mut out, "response.output_text.done",
+                        push(
+                            &mut out,
+                            "response.output_text.done",
                             &json!({ "type": "response.output_text.done", "content_index": content_index,
                                      "item_id": item_id, "output_index": output_index,
-                                     "sequence_number": seq, "text": text }));
+                                     "sequence_number": seq, "text": text }),
+                        );
                         seq += 1;
 
-                        push(&mut out, "response.content_part.done",
+                        push(
+                            &mut out,
+                            "response.content_part.done",
                             &json!({ "type": "response.content_part.done", "content_index": content_index,
                                      "item_id": item_id, "output_index": output_index,
-                                     "sequence_number": seq, "part": part }));
+                                     "sequence_number": seq, "part": part }),
+                        );
                         seq += 1;
                     }
                 }
             }
 
             // output_item.done — the fully completed item.
-            push(&mut out, "response.output_item.done",
+            push(
+                &mut out,
+                "response.output_item.done",
                 &json!({ "type": "response.output_item.done", "output_index": output_index,
-                         "sequence_number": seq, "item": item }));
+                         "sequence_number": seq, "item": item }),
+            );
             seq += 1;
         }
     }
 
     // 3. response.completed — the full object, verbatim.
-    push(&mut out, "response.completed",
-        &json!({ "type": "response.completed", "sequence_number": seq, "response": full }));
+    push(
+        &mut out,
+        "response.completed",
+        &json!({ "type": "response.completed", "sequence_number": seq, "response": full }),
+    );
 
     out.into_bytes()
 }

@@ -1,7 +1,7 @@
 //! Simple SQLite store: settings key-value + tool config backup + local pay log.
 
 use crate::error::AppError;
-use rusqlite::{Connection, OptionalExtension, params};
+use rusqlite::{params, Connection, OptionalExtension};
 use serde::Serialize;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
@@ -13,11 +13,11 @@ pub struct Db {
 impl Db {
     pub fn open(path: &PathBuf) -> Result<Self, AppError> {
         if let Some(parent) = path.parent() {
-            std::fs::create_dir_all(parent)
-                .map_err(|e| AppError::io(parent, e))?;
+            std::fs::create_dir_all(parent).map_err(|e| AppError::io(parent, e))?;
         }
         let conn = Connection::open(path)?;
-        conn.execute_batch("
+        conn.execute_batch(
+            "
             PRAGMA journal_mode=WAL;
             CREATE TABLE IF NOT EXISTS settings (
                 key   TEXT PRIMARY KEY,
@@ -45,17 +45,22 @@ impl Db {
                 price_cached      TEXT    NOT NULL DEFAULT '',
                 price_output      TEXT    NOT NULL DEFAULT ''
             );
-        ")?;
-        Ok(Db { conn: Arc::new(Mutex::new(conn)) })
+        ",
+        )?;
+        Ok(Db {
+            conn: Arc::new(Mutex::new(conn)),
+        })
     }
 
     pub fn get_setting(&self, key: &str) -> Result<Option<String>, AppError> {
         let conn = self.conn.lock().unwrap();
-        Ok(conn.query_row(
-            "SELECT value FROM settings WHERE key = ?1",
-            params![key],
-            |row| row.get(0),
-        ).optional()?)
+        Ok(conn
+            .query_row(
+                "SELECT value FROM settings WHERE key = ?1",
+                params![key],
+                |row| row.get(0),
+            )
+            .optional()?)
     }
 
     pub fn set_setting(&self, key: &str, value: &str) -> Result<(), AppError> {
@@ -70,11 +75,13 @@ impl Db {
 
     pub fn get_backup(&self, key: &str) -> Result<Option<String>, AppError> {
         let conn = self.conn.lock().unwrap();
-        Ok(conn.query_row(
-            "SELECT value FROM config_backup WHERE key = ?1",
-            params![key],
-            |row| row.get(0),
-        ).optional()?)
+        Ok(conn
+            .query_row(
+                "SELECT value FROM config_backup WHERE key = ?1",
+                params![key],
+                |row| row.get(0),
+            )
+            .optional()?)
     }
 
     pub fn set_backup(&self, key: &str, value: &str) -> Result<(), AppError> {
@@ -96,14 +103,16 @@ impl Db {
     pub fn log_payment(&self, entry: &NewPayLog) -> Result<(), AppError> {
         let conn = self.conn.lock().unwrap();
         // Add new columns to existing tables if they don't exist (migration).
-        let _ = conn.execute_batch("
+        let _ = conn.execute_batch(
+            "
             ALTER TABLE pay_log ADD COLUMN input_tokens  INTEGER NOT NULL DEFAULT 0;
             ALTER TABLE pay_log ADD COLUMN cached_tokens INTEGER NOT NULL DEFAULT 0;
             ALTER TABLE pay_log ADD COLUMN output_tokens INTEGER NOT NULL DEFAULT 0;
             ALTER TABLE pay_log ADD COLUMN price_input   TEXT    NOT NULL DEFAULT '';
             ALTER TABLE pay_log ADD COLUMN price_cached  TEXT    NOT NULL DEFAULT '';
             ALTER TABLE pay_log ADD COLUMN price_output  TEXT    NOT NULL DEFAULT '';
-        ");
+        ",
+        );
         conn.execute(
             "INSERT INTO pay_log
              (created_at, path, tool, model, amount_usdc, tx_hash,
@@ -112,11 +121,21 @@ impl Db {
               price_input, price_cached, price_output)
              VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)",
             params![
-                entry.created_at, entry.path, entry.tool, entry.model,
-                entry.amount_usdc, entry.tx_hash,
-                entry.prompt_tokens, entry.completion_tokens, entry.duration_ms,
-                entry.input_tokens, entry.cached_tokens, entry.output_tokens,
-                entry.price_input, entry.price_cached, entry.price_output,
+                entry.created_at,
+                entry.path,
+                entry.tool,
+                entry.model,
+                entry.amount_usdc,
+                entry.tx_hash,
+                entry.prompt_tokens,
+                entry.completion_tokens,
+                entry.duration_ms,
+                entry.input_tokens,
+                entry.cached_tokens,
+                entry.output_tokens,
+                entry.price_input,
+                entry.price_cached,
+                entry.price_output,
             ],
         )?;
         Ok(())
@@ -133,22 +152,22 @@ impl Db {
         )?;
         let rows = stmt.query_map(params![limit as i64], |row| {
             Ok(PayLogEntry {
-                id:                row.get(0)?,
-                created_at:        row.get(1)?,
-                path:              row.get(2)?,
-                tool:              row.get(3)?,
-                model:             row.get(4)?,
-                amount_usdc:       row.get(5)?,
-                tx_hash:           row.get(6)?,
-                prompt_tokens:     row.get(7)?,
+                id: row.get(0)?,
+                created_at: row.get(1)?,
+                path: row.get(2)?,
+                tool: row.get(3)?,
+                model: row.get(4)?,
+                amount_usdc: row.get(5)?,
+                tx_hash: row.get(6)?,
+                prompt_tokens: row.get(7)?,
                 completion_tokens: row.get(8)?,
-                duration_ms:       row.get(9)?,
-                input_tokens:      row.get(10).unwrap_or(0),
-                cached_tokens:     row.get(11).unwrap_or(0),
-                output_tokens:     row.get(12).unwrap_or(0),
-                price_input:       row.get(13).unwrap_or_default(),
-                price_cached:      row.get(14).unwrap_or_default(),
-                price_output:      row.get(15).unwrap_or_default(),
+                duration_ms: row.get(9)?,
+                input_tokens: row.get(10).unwrap_or(0),
+                cached_tokens: row.get(11).unwrap_or(0),
+                output_tokens: row.get(12).unwrap_or(0),
+                price_input: row.get(13).unwrap_or_default(),
+                price_cached: row.get(14).unwrap_or_default(),
+                price_output: row.get(15).unwrap_or_default(),
             })
         })?;
         Ok(rows.filter_map(|r| r.ok()).collect())
@@ -156,43 +175,43 @@ impl Db {
 }
 
 pub struct NewPayLog {
-    pub created_at:        String,
-    pub path:              String,
-    pub tool:              String,
-    pub model:             String,
-    pub amount_usdc:       String,
-    pub tx_hash:           String,
-    pub prompt_tokens:     i64,
+    pub created_at: String,
+    pub path: String,
+    pub tool: String,
+    pub model: String,
+    pub amount_usdc: String,
+    pub tx_hash: String,
+    pub prompt_tokens: i64,
     pub completion_tokens: i64,
-    pub duration_ms:       i64,
+    pub duration_ms: i64,
     // From X-Usage-* / X-Price-* headers (zero/empty if server didn't provide)
-    pub input_tokens:      i64,
-    pub cached_tokens:     i64,
-    pub output_tokens:     i64,
-    pub price_input:       String,
-    pub price_cached:      String,
-    pub price_output:      String,
+    pub input_tokens: i64,
+    pub cached_tokens: i64,
+    pub output_tokens: i64,
+    pub price_input: String,
+    pub price_cached: String,
+    pub price_output: String,
 }
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PayLogEntry {
-    pub id:                i64,
-    pub created_at:        String,
-    pub path:              String,
-    pub tool:              String,
-    pub model:             String,
-    pub amount_usdc:       String,
-    pub tx_hash:           String,
-    pub prompt_tokens:     i64,
+    pub id: i64,
+    pub created_at: String,
+    pub path: String,
+    pub tool: String,
+    pub model: String,
+    pub amount_usdc: String,
+    pub tx_hash: String,
+    pub prompt_tokens: i64,
     pub completion_tokens: i64,
-    pub duration_ms:       i64,
-    pub input_tokens:      i64,
-    pub cached_tokens:     i64,
-    pub output_tokens:     i64,
-    pub price_input:       String,
-    pub price_cached:      String,
-    pub price_output:      String,
+    pub duration_ms: i64,
+    pub input_tokens: i64,
+    pub cached_tokens: i64,
+    pub output_tokens: i64,
+    pub price_input: String,
+    pub price_cached: String,
+    pub price_output: String,
 }
 
 pub fn db_path() -> PathBuf {

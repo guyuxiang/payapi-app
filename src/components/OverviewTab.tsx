@@ -98,7 +98,7 @@ function latencyLabel(ms: number | null, up: boolean | null): string {
 }
 
 function fmtTokens(n: number): string {
-  if (n === 0)        return "—";
+  if (n === 0)        return "0";
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000)     return `${(n / 1_000).toFixed(1)}k`;
   return String(n);
@@ -323,14 +323,7 @@ export function OverviewTab({ serverUrl, active }: { serverUrl: string; active: 
 
   // Request trend derived stats
   const lastHourCount = hourlyBuckets[23]?.amount ?? 0;
-  const peakBucket    = hourlyBuckets.reduce(
-    (best, b) => b.amount > best.amount ? b : best,
-    { label: "", amount: 0 },
-  );
   const activeHours   = hourlyBuckets.filter(b => b.amount > 0).length;
-  const peakTopLabel  = peakBucket.amount > 0
-    ? `峰 ${peakBucket.amount} 次`
-    : undefined;
   const lowBalance    = balNum !== null && balNum < 1;
 
   return (
@@ -410,20 +403,12 @@ export function OverviewTab({ serverUrl, active }: { serverUrl: string; active: 
             data={hourlyBuckets}
             color="#2C68B5"
             height={80}
-            highlightPeak
-            topLabel={peakTopLabel}
           />
           <div className="chart-footer">
             <span>
               上 1h&nbsp;·&nbsp;
               <strong style={{ color: "var(--t1)" }}>{lastHourCount}</strong> 次
             </span>
-            {peakBucket.amount > 0 && (
-              <span>
-                峰值 {peakBucket.label}&nbsp;·&nbsp;
-                <strong style={{ color: "var(--blue)" }}>{peakBucket.amount}</strong> 次
-              </span>
-            )}
           </div>
         </div>
       </div>

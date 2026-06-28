@@ -13,7 +13,8 @@ use crate::error::AppError;
 use serde_json::{json, Value};
 use std::path::PathBuf;
 
-const X402_PROXY_URL: &str = "http://localhost:8402";
+use super::X402_PROXY_URL;
+
 const PROFILE_ID: &str = "00000000-0000-4000-8000-000000157210";
 const PROFILE_NAME: &str = "PAYAPI x402";
 const CONFIG_FILE: &str = "claude_desktop_config.json";
@@ -35,11 +36,19 @@ fn platform_claude_dir(_variant: &str) -> Option<PathBuf> {
     None
 }
 
-fn app_dir() -> Option<PathBuf> { platform_claude_dir("Claude") }
-fn app_3p_dir() -> Option<PathBuf> { platform_claude_dir("Claude-3p") }
+fn app_dir() -> Option<PathBuf> {
+    platform_claude_dir("Claude")
+}
+fn app_3p_dir() -> Option<PathBuf> {
+    platform_claude_dir("Claude-3p")
+}
 
-fn main_config_path() -> Option<PathBuf> { app_dir().map(|d| d.join(CONFIG_FILE)) }
-fn config_3p_path() -> Option<PathBuf> { app_3p_dir().map(|d| d.join(CONFIG_FILE)) }
+fn main_config_path() -> Option<PathBuf> {
+    app_dir().map(|d| d.join(CONFIG_FILE))
+}
+fn config_3p_path() -> Option<PathBuf> {
+    app_3p_dir().map(|d| d.join(CONFIG_FILE))
+}
 fn profile_path() -> Option<PathBuf> {
     app_3p_dir().map(|d| d.join(CONFIG_LIB_DIR).join(format!("{PROFILE_ID}.json")))
 }
@@ -128,13 +137,20 @@ fn build_meta() -> Value {
 
 fn read_opt_text(path: &Option<PathBuf>) -> Value {
     path.as_ref()
-        .and_then(|p| if p.exists() { std::fs::read_to_string(p).ok() } else { None })
+        .and_then(|p| {
+            if p.exists() {
+                std::fs::read_to_string(p).ok()
+            } else {
+                None
+            }
+        })
         .map(Value::String)
         .unwrap_or(Value::Null)
 }
 
 fn read_json(path: &PathBuf) -> Option<Value> {
-    std::fs::read_to_string(path).ok()
+    std::fs::read_to_string(path)
+        .ok()
         .and_then(|s| serde_json::from_str(&s).ok())
 }
 
@@ -151,7 +167,9 @@ fn ensure_parent(path: &PathBuf) -> Result<(), AppError> {
 
 /// Restore a single file from its backed-up Value (String = content, Null = didn't exist → delete).
 fn restore_file(path: &Option<PathBuf>, val: Option<&Value>) -> Result<(), AppError> {
-    let Some(path) = path else { return Ok(()); };
+    let Some(path) = path else {
+        return Ok(());
+    };
     match val.and_then(|v| v.as_str()) {
         Some(content) => {
             ensure_parent(path)?;

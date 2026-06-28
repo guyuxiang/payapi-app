@@ -89,22 +89,33 @@ pub fn sign_challenge(
     let chain_id = chain_id_from_network(&req.network)?;
     let usdc = Address::from_str(&req.asset).map_err(|e| format!("bad asset address: {e}"))?;
     let pay_to = Address::from_str(&req.pay_to).map_err(|e| format!("bad payTo address: {e}"))?;
-    let value = U256::from_str(&req.max_amount_required)
-        .map_err(|e| format!("bad amount: {e}"))?;
+    let value = U256::from_str(&req.max_amount_required).map_err(|e| format!("bad amount: {e}"))?;
     let request_id = req
         .extra
         .get("requestId")
         .cloned()
         .ok_or("challenge missing requestId")?;
 
-    let domain_name = req.extra.get("name").cloned().unwrap_or_else(|| "USD Coin".to_string());
-    let domain_version = req.extra.get("version").cloned().unwrap_or_else(|| "2".to_string());
+    let domain_name = req
+        .extra
+        .get("name")
+        .cloned()
+        .unwrap_or_else(|| "USD Coin".to_string());
+    let domain_version = req
+        .extra
+        .get("version")
+        .cloned()
+        .unwrap_or_else(|| "2".to_string());
 
     let now = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .map_err(|e| e.to_string())?
         .as_secs();
-    let window = if req.max_timeout_seconds == 0 { 120 } else { req.max_timeout_seconds };
+    let window = if req.max_timeout_seconds == 0 {
+        120
+    } else {
+        req.max_timeout_seconds
+    };
     let valid_before = now + window;
 
     let nonce = B256::random();
@@ -140,5 +151,9 @@ pub fn sign_challenge(
     use base64::Engine;
     let header = base64::engine::general_purpose::STANDARD.encode(json);
     let amount_usd = crate::wallet::balance::format_usdc(value);
-    Ok(SignedPayment { header, request_id, amount_usd })
+    Ok(SignedPayment {
+        header,
+        request_id,
+        amount_usd,
+    })
 }

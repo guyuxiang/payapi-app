@@ -16,10 +16,10 @@ pub struct ToolDetection {
 #[tauri::command]
 pub fn x402_detect_tools() -> ToolDetection {
     ToolDetection {
-        claude:         crate::proxy_mode::claude::is_installed(),
+        claude: crate::proxy_mode::claude::is_installed(),
         claude_desktop: crate::proxy_mode::claude_desktop::is_installed(),
-        codex:          crate::proxy_mode::codex::is_installed(),
-        gemini:         crate::proxy_mode::gemini::is_installed(),
+        codex: crate::proxy_mode::codex::is_installed(),
+        gemini: crate::proxy_mode::gemini::is_installed(),
     }
 }
 
