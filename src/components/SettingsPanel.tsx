@@ -134,7 +134,7 @@ export function SettingsPanel({ serverUrl, setServerUrl, active }: Props) {
             <input
               className="input-field"
               type="text"
-              placeholder="http://localhost:3402"
+              placeholder="https://www.openshort.com/payapi"
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
             />

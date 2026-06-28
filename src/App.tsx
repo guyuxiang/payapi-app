@@ -7,7 +7,7 @@ import { getSetting, setSetting } from "./lib/api";
 
 type Tab = "overview" | "wallet" | "settings";
 
-const DEFAULT_SERVER = "http://localhost:3402";
+const DEFAULT_SERVER = "https://www.openshort.com/payapi";
 
 // ── Inline SVG icons ──────────────────────────────────────
 
