@@ -313,7 +313,7 @@ export function WalletPanel({ serverUrl, active }: { serverUrl: string; active: 
                     {network === "base" ? "Base 主网" : "Base Sepolia 测试网"}
                   </span>
                 </div>
-                <p className="addr-mono" style={{ fontSize: 10, lineHeight: 1.75, wordBreak: "break-all" }}>
+                <p className="addr-mono receive-address">
                   {wallet.address}
                 </p>
                 <button className="btn btn-ghost btn-sm" onClick={copyAddress} style={{ alignSelf: "flex-start" }}>

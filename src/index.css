@@ -773,6 +773,12 @@ body {
   line-height: 1.65;
 }
 
+.receive-address {
+  font-size: 13px;
+  color: #000;
+  line-height: 1.6;
+}
+
 /* ── Buttons ──────────────────────────────────────────── */
 
 .btn {

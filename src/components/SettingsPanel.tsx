@@ -1,15 +1,8 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import {
-  ToolDetection,
-  applyTool,
-  detectTools,
   getSetting,
-  getProxyTools,
-  proxyModeStatus,
-  restoreTool,
   setSetting,
-  setProxyTools,
 } from "../lib/api";
 import { extractError } from "../lib/error";
 
@@ -41,27 +34,7 @@ const IconPort = () => (
   </svg>
 );
 
-const IconTools = () => (
-  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"
-    stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
-    <path d="M9.5 1.5a3 3 0 00-2.83 4L1.5 10.7a1 1 0 000 1.5l.3.3a1 1 0 001.5 0L8.5 7.3a3 3 0 004.2-2.8 3 3 0 00-.4-1.5L10.5 5 9 3.5l.5-2z" />
-  </svg>
-);
-
 // ──────────────────────────────────────────────────────────
-
-interface ToolMeta {
-  key: keyof ToolDetection;
-  name: string;
-  configHint: string;
-}
-
-const TOOLS: ToolMeta[] = [
-  { key: "claude",         name: "Claude Code",    configHint: "~/.claude/settings.json" },
-  { key: "claude_desktop", name: "Claude Desktop", configHint: "AppSupport/Claude/" },
-  { key: "codex",          name: "Codex",          configHint: "~/.codex/config.toml" },
-  { key: "gemini",         name: "Gemini CLI",     configHint: "~/.gemini/.env" },
-];
 
 interface Props {
   serverUrl: string;
@@ -72,22 +45,12 @@ interface Props {
 export function SettingsPanel({ serverUrl, setServerUrl, active }: Props) {
   const [draft,        setDraft]        = useState(serverUrl);
   const [network,      setNetwork]      = useState("base-sepolia");
-  const [detected,     setDetected]     = useState<ToolDetection>({
-    claude: false, claude_desktop: false, codex: false, gemini: false,
-  });
-  const [modeOn,       setModeOn]       = useState(false);
-  const [enabledTools, setEnabledTools] = useState<Set<string>>(
-    new Set(["claude", "claude_desktop", "codex", "gemini"])
-  );
 
   useEffect(() => { setDraft(serverUrl); }, [serverUrl]);
 
   useEffect(() => {
     if (!active) return;
     getSetting("network").then((v) => { if (v) setNetwork(v); }).catch(() => {});
-    detectTools().then(setDetected).catch(() => {});
-    proxyModeStatus().then(setModeOn).catch(() => {});
-    getProxyTools().then((keys) => setEnabledTools(new Set(keys))).catch(() => {});
   }, [active]);
 
   const save = async () => {
@@ -100,24 +63,7 @@ export function SettingsPanel({ serverUrl, setServerUrl, active }: Props) {
     }
   };
 
-  const toggleTool = async (key: string, checked: boolean) => {
-    const next = new Set(enabledTools);
-    if (checked) next.add(key); else next.delete(key);
-    setEnabledTools(next);
-    try {
-      await setProxyTools([...next]);
-      if (modeOn) {
-        if (checked) await applyTool(key);
-        else await restoreTool(key);
-      }
-    } catch (e) {
-      toast.error("工具配置失败: " + extractError(e));
-    }
-  };
-
   const handleNetworkChange = (v: string) => setNetwork(v);
-
-  const installedCount = TOOLS.filter(t => detected[t.key]).length;
 
   return (
     <div className="panel">
@@ -134,7 +80,7 @@ export function SettingsPanel({ serverUrl, setServerUrl, active }: Props) {
             <input
               className="input-field"
               type="text"
-              placeholder="https://www.openshort.com/payapi"
+              placeholder="https://www.openshort.cloud/payapi/"
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
             />
@@ -175,52 +121,6 @@ export function SettingsPanel({ serverUrl, setServerUrl, active }: Props) {
       </div>
 
       <button className="btn btn-primary" onClick={save}>保存设置</button>
-
-      <div className="divider" />
-
-      {/* ── Tool config ── */}
-      <div className="card">
-        <div className="card-head">
-          <div className="ci ci-amber"><IconTools /></div>
-          <span className="card-title">工具配置</span>
-          <span className="count-badge">{installedCount}/{TOOLS.length} 已安装</span>
-        </div>
-        <div style={{ padding: "0 13px 4px" }}>
-          <p className="form-hint" style={{ marginBottom: 8 }}>
-            勾选需要代理的工具，开启代理模式时自动注入 x402 配置
-          </p>
-          <div className="tool-list">
-            {TOOLS.map((t) => {
-              const installed = detected[t.key];
-              const checked   = enabledTools.has(t.key);
-              return (
-                <label
-                  key={t.key}
-                  className={`tool-row tool-row-check${!installed ? " tool-row-dim" : ""}`}
-                  style={{ cursor: installed ? "pointer" : "default" }}
-                >
-                  <div className="tool-info">
-                    <span className={`tool-name${!installed ? " dim" : ""}`}>{t.name}</span>
-                    <span className="tool-path">
-                      {installed ? t.configHint : "未安装"}
-                    </span>
-                  </div>
-                  {installed && modeOn && checked && (
-                    <span className="pill pill-green" style={{ fontSize: 10, padding: "1px 7px" }}>已配置</span>
-                  )}
-                  <input
-                    type="checkbox"
-                    className="tool-checkbox"
-                    checked={checked && installed}
-                    disabled={!installed}
-                    onChange={(e) => toggleTool(t.key, e.target.checked)}
-                  />
-                </label>
-              );
-            })}
-          </div>
-        </div>
-      </div>
 
       {/* ── About ── */}
       <div style={{ padding: "2px", display: "flex", flexDirection: "column", gap: 4 }}>

@@ -4,6 +4,7 @@ import {
   BalanceInfo,
   ToolDetection,
   WalletInfo,
+  applyTool,
   detectTools,
   getBalance,
   getLocalHistory,
@@ -14,6 +15,8 @@ import {
   proxyModeEnable,
   proxyModeStatus,
   proxyStatus,
+  restoreTool,
+  setProxyTools,
   startProxy,
 } from "../lib/api";
 import { extractError } from "../lib/error";
@@ -39,11 +42,17 @@ const USDC: Record<string, string> = {
   "base":         "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
 };
 
-const TOOL_NAMES: { key: keyof ToolDetection; name: string }[] = [
-  { key: "claude",         name: "Claude Code"    },
-  { key: "claude_desktop", name: "Claude Desktop" },
-  { key: "codex",          name: "Codex"          },
-  { key: "gemini",         name: "Gemini CLI"     },
+interface ToolMeta {
+  key: keyof ToolDetection;
+  name: string;
+  configHint: string;
+}
+
+const TOOLS: ToolMeta[] = [
+  { key: "claude",         name: "Claude Code",    configHint: "~/.claude/settings.json" },
+  { key: "claude_desktop", name: "Claude Desktop", configHint: "AppSupport/Claude/" },
+  { key: "codex",          name: "Codex",          configHint: "~/.codex/config.toml" },
+  { key: "gemini",         name: "Gemini CLI",     configHint: "~/.gemini/.env" },
 ];
 
 // ── SVG icons ──────────────────────────────────────────────
@@ -76,6 +85,13 @@ const IconGrid = () => (
 const IconShield = () => (
   <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
     <path d="M7 1L2 3.4v4.3C2 10.9 4.2 13.6 7 14.4c2.8-.8 5-3.5 5-6.7V3.4L7 1z" opacity="0.9"/>
+  </svg>
+);
+
+const IconTools = () => (
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none"
+    stroke="currentColor" strokeWidth="1.4" strokeLinecap="round">
+    <path d="M9.5 1.5a3 3 0 00-2.83 4L1.5 10.7a1 1 0 000 1.5l.3.3a1 1 0 001.5 0L8.5 7.3a3 3 0 004.2-2.8 3 3 0 00-.4-1.5L10.5 5 9 3.5l.5-2z" />
   </svg>
 );
 
@@ -284,7 +300,7 @@ export function OverviewTab({ serverUrl, active }: { serverUrl: string; active: 
         }
         await proxyModeEnable();
         setModeOn(true);
-        const names = TOOL_NAMES
+        const names = TOOLS
           .filter((t) => detected[t.key] && enabledTools.has(t.key))
           .map((t) => t.name)
           .join("、");
@@ -298,6 +314,21 @@ export function OverviewTab({ serverUrl, active }: { serverUrl: string; active: 
       toast.error(extractError(e));
     } finally {
       setLoadingToggle(false);
+    }
+  };
+
+  const toggleTool = async (key: string, checked: boolean) => {
+    const next = new Set(enabledTools);
+    if (checked) next.add(key); else next.delete(key);
+    setEnabledTools(next);
+    try {
+      await setProxyTools([...next]);
+      if (modeOn) {
+        if (checked) await applyTool(key);
+        else await restoreTool(key);
+      }
+    } catch (e) {
+      toast.error("工具配置失败: " + extractError(e));
     }
   };
 
@@ -325,6 +356,7 @@ export function OverviewTab({ serverUrl, active }: { serverUrl: string; active: 
   const lastHourCount = hourlyBuckets[23]?.amount ?? 0;
   const activeHours   = hourlyBuckets.filter(b => b.amount > 0).length;
   const lowBalance    = balNum !== null && balNum < 1;
+  const installedCount = TOOLS.filter(t => detected[t.key]).length;
 
   return (
     <div className="panel">
@@ -386,6 +418,50 @@ export function OverviewTab({ serverUrl, active }: { serverUrl: string; active: 
           <p style={{ fontSize: 12, color: "var(--t3)" }}>
             {modeOn ? "AI 请求通过本地代理，按 USDC 按需结算" : "开启后自动配置已安装的 AI 编码工具"}
           </p>
+        </div>
+      </div>
+
+      {/* ── Tool config ── */}
+      <div className="card">
+        <div className="card-head">
+          <div className="ci ci-amber"><IconTools /></div>
+          <span className="card-title">工具配置</span>
+          <span className="count-badge">{installedCount}/{TOOLS.length} 已安装</span>
+        </div>
+        <div style={{ padding: "0 13px 4px" }}>
+          <p className="form-hint" style={{ marginBottom: 8 }}>
+            勾选需要代理的工具，开启代理模式时自动注入 x402 配置
+          </p>
+          <div className="tool-list">
+            {TOOLS.map((t) => {
+              const installed = detected[t.key];
+              const checked   = enabledTools.has(t.key);
+              return (
+                <label
+                  key={t.key}
+                  className={`tool-row tool-row-check${!installed ? " tool-row-dim" : ""}`}
+                  style={{ cursor: installed ? "pointer" : "default" }}
+                >
+                  <div className="tool-info">
+                    <span className={`tool-name${!installed ? " dim" : ""}`}>{t.name}</span>
+                    <span className="tool-path">
+                      {installed ? t.configHint : "未安装"}
+                    </span>
+                  </div>
+                  {installed && modeOn && checked && (
+                    <span className="pill pill-green" style={{ fontSize: 10, padding: "1px 7px" }}>已配置</span>
+                  )}
+                  <input
+                    type="checkbox"
+                    className="tool-checkbox"
+                    checked={checked && installed}
+                    disabled={!installed}
+                    onChange={(e) => toggleTool(t.key, e.target.checked)}
+                  />
+                </label>
+              );
+            })}
+          </div>
         </div>
       </div>
 
