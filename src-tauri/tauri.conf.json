@@ -1,7 +1,7 @@
 {
-  "productName": "PAYAPI",
+  "productName": "xPay",
   "version": "0.1.0",
-  "identifier": "com.payapi.app",
+  "identifier": "com.xpay.desktop",
   "build": {
     "beforeDevCommand": "npm run dev",
     "beforeBuildCommand": "npm run build",
@@ -11,7 +11,7 @@
   "app": {
     "windows": [
       {
-        "title": "PAYAPI",
+        "title": "xPay",
         "width": 640,
         "height": 640,
         "minWidth": 640,

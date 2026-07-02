@@ -262,7 +262,7 @@ pub fn start(server_url: String, port: u16, db: Arc<Db>) -> Result<u16, String> 
 
     let (tx, rx) = oneshot::channel();
     std::thread::Builder::new()
-        .name("payapi-proxy".to_string())
+        .name("xpay-proxy".to_string())
         .spawn(move || {
             let rt = match tokio::runtime::Builder::new_multi_thread()
                 .enable_all()

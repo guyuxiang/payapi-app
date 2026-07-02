@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    payapi_app_lib::run()
+    xpay_desktop_lib::run()
 }

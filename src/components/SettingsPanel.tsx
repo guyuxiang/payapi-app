@@ -72,7 +72,7 @@ export function SettingsPanel({ serverUrl, setServerUrl, active }: Props) {
       <div className="card">
         <div className="card-head">
           <div className="ci ci-blue"><IconServer /></div>
-          <span className="card-title">PAYAPI 服务器</span>
+          <span className="card-title">xPay 服务器</span>
         </div>
         <div className="card-body">
           <div className="form-group">
@@ -80,7 +80,7 @@ export function SettingsPanel({ serverUrl, setServerUrl, active }: Props) {
             <input
               className="input-field"
               type="text"
-              placeholder="https://www.openshort.cloud/payapi/"
+              placeholder="https://www.openshort.cloud/xpay/"
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
             />
@@ -124,7 +124,7 @@ export function SettingsPanel({ serverUrl, setServerUrl, active }: Props) {
 
       {/* ── About ── */}
       <div style={{ padding: "2px", display: "flex", flexDirection: "column", gap: 4 }}>
-        <p style={{ fontSize: 12, fontWeight: 600, color: "var(--t2)" }}>PAYAPI v0.1.0</p>
+        <p style={{ fontSize: 12, fontWeight: 600, color: "var(--t2)" }}>xPay v0.1.0</p>
         <p className="form-hint">通过 USDC 在 Base 网络按需付费访问 AI 服务</p>
       </div>
 

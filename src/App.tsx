@@ -7,7 +7,7 @@ import { getSetting, setSetting } from "./lib/api";
 
 type Tab = "overview" | "wallet" | "settings";
 
-const DEFAULT_SERVER = "https://www.openshort.cloud/payapi/";
+const DEFAULT_SERVER = "https://www.openshort.cloud/xpay/";
 
 // ── Inline SVG icons ──────────────────────────────────────
 
@@ -80,13 +80,14 @@ export default function App() {
         toastOptions={{
           duration: 3000,
           style: {
-            background: "var(--surface-hi)",
+            background: "var(--glass-strong)",
             color: "var(--t1)",
             border: "1px solid var(--border-hi)",
             fontSize: "12.5px",
-            borderRadius: "8px",
-            padding: "10px 14px",
-            boxShadow: "0 6px 20px rgba(30,20,10,0.18)",
+            borderRadius: "18px",
+            padding: "11px 15px",
+            backdropFilter: "blur(28px) saturate(170%)",
+            boxShadow: "var(--shadow-float)",
           },
           success: {
             iconTheme: { primary: "var(--green)", secondary: "var(--green-bg)" },
@@ -99,7 +100,9 @@ export default function App() {
 
       {/* ── Sidebar ── */}
       <aside className="sidebar">
-        <div className="sb-logo" aria-hidden="true" />
+        <div className="sb-brand" aria-hidden="true">
+          <div className="sb-logo" />
+        </div>
 
         <nav className="sb-nav">
           {NAV.map(({ id, label, Icon }) => (
@@ -123,7 +126,6 @@ export default function App() {
       <div className="main-area">
         <header className="page-header">
           <span className="page-title">{PAGE_TITLES[tab]}</span>
-          <span className="page-badge">PAYAPI</span>
         </header>
 
         <div style={{ flex: 1, overflow: "auto", display: tab === "overview" ? undefined : "none" }}>

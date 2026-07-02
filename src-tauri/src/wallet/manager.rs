@@ -1,6 +1,6 @@
 //! Local BIP-39 wallet for x402 payment signing.
 //!
-//! Stored at ~/.payapi/wallet.json with 0600 permissions.
+//! Stored at ~/.xpay/wallet.json with 0600 permissions.
 
 use alloy_signer_local::coins_bip39::{English, Mnemonic};
 use alloy_signer_local::{MnemonicBuilder, PrivateKeySigner};
@@ -124,9 +124,9 @@ impl WalletManager {
 }
 
 pub fn wallet_path() -> PathBuf {
-    // ~/.config/payapi (Linux), %APPDATA%\payapi (Windows), ~/Library/Application Support/payapi (Mac)
+    // ~/.config/xpay (Linux), %APPDATA%\xpay (Windows), ~/Library/Application Support/xpay (Mac)
     dirs::config_dir()
         .unwrap_or_else(|| dirs::home_dir().unwrap_or_else(|| PathBuf::from(".")))
-        .join("payapi")
+        .join("xpay")
         .join("wallet.json")
 }

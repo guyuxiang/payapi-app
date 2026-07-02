@@ -215,12 +215,12 @@ pub struct PayLogEntry {
 }
 
 pub fn db_path() -> PathBuf {
-    app_data_dir().join("payapi-app.db")
+    app_data_dir().join("xpay-desktop.db")
 }
 
 fn app_data_dir() -> PathBuf {
-    // ~/.config/payapi (Linux), %APPDATA%\payapi (Windows), ~/Library/Application Support/payapi (Mac)
+    // ~/.config/xpay (Linux), %APPDATA%\xpay (Windows), ~/Library/Application Support/xpay (Mac)
     dirs::config_dir()
         .unwrap_or_else(|| dirs::home_dir().unwrap_or_else(|| PathBuf::from(".")))
-        .join("payapi")
+        .join("xpay")
 }

@@ -1,13 +1,13 @@
 [package]
-name = "payapi-app"
+name = "xpay-desktop"
 version = "0.1.0"
-description = "PAYAPI x402 Payment Client"
+description = "xPay x402 Payment Client"
 authors = []
 edition = "2021"
 rust-version = "1.85.0"
 
 [lib]
-name = "payapi_app_lib"
+name = "xpay_desktop_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 doctest = false
 

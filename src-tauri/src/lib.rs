@@ -11,7 +11,7 @@ use store::{db_path, Db};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    log::info!("payapi-app starting, db={}", db_path().display());
+    log::info!("xpay-desktop starting, db={}", db_path().display());
     let db = Arc::new(Db::open(&db_path()).expect("open db"));
     log::info!("db opened");
 
@@ -41,7 +41,7 @@ pub fn run() {
                 .level(log::LevelFilter::Info)
                 .target(tauri_plugin_log::Target::new(
                     tauri_plugin_log::TargetKind::LogDir {
-                        file_name: Some("payapi".into()),
+                        file_name: Some("xpay".into()),
                     },
                 ))
                 .target(tauri_plugin_log::Target::new(
