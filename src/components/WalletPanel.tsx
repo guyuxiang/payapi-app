@@ -14,6 +14,7 @@ import {
   recCachedTokens,
 } from "../lib/payrecord";
 import { useWallet } from "../hooks/useWallet";
+import { LiquidFrame } from "./LiquidFrame";
 
 // ── SVG icons ──────────────────────────────────────────────
 
@@ -166,39 +167,39 @@ export function WalletPanel({ serverUrl, active }: { serverUrl: string; active: 
   if (!wallet) {
     return (
       <div className="panel">
-        <div className="card">
-          <div className="card-head">
-            <div className="ci ci-clay"><IconCoin /></div>
-            <span className="card-title">创建钱包</span>
-          </div>
-          <div className="card-body">
-            <div className="empty-state" style={{ paddingTop: 8 }}>
-              <p className="empty-title">还没有钱包</p>
-              <p className="empty-sub">创建一个新钱包，或导入已有助记词</p>
+          <LiquidFrame variant="card" radius={8} className="card">
+            <div className="card-head">
+              <div className="ci ci-clay"><IconCoin /></div>
+              <span className="card-title">创建钱包</span>
             </div>
-            <button className="btn btn-primary btn-block" onClick={handleCreate}>
-              创建新钱包
-            </button>
-          </div>
-        </div>
+            <div className="card-body">
+              <div className="empty-state" style={{ paddingTop: 8 }}>
+                <p className="empty-title">还没有钱包</p>
+                <p className="empty-sub">创建一个新钱包，或导入已有助记词</p>
+              </div>
+              <button className="btn btn-primary btn-block" onClick={handleCreate}>
+                创建新钱包
+              </button>
+            </div>
+          </LiquidFrame>
 
-        <div className="card">
-          <div className="card-head">
-            <div className="ci ci-purple"><IconKey /></div>
-            <span className="card-title">导入助记词</span>
-          </div>
-          <div className="card-body">
-            <textarea
-              className="textarea-field" rows={3}
-              placeholder="输入 12 个助记词，以空格分隔..."
-              value={importText}
-              onChange={(e) => setImportText(e.target.value)}
-            />
-            <button className="btn btn-ghost" onClick={handleImport} disabled={!importText.trim()}>
-              导入
-            </button>
-          </div>
-        </div>
+          <LiquidFrame variant="card" radius={8} className="card">
+            <div className="card-head">
+              <div className="ci ci-purple"><IconKey /></div>
+              <span className="card-title">导入助记词</span>
+            </div>
+            <div className="card-body">
+              <textarea
+                className="textarea-field" rows={3}
+                placeholder="输入 12 个助记词，以空格分隔..."
+                value={importText}
+                onChange={(e) => setImportText(e.target.value)}
+              />
+              <button className="btn btn-ghost" onClick={handleImport} disabled={!importText.trim()}>
+                导入
+              </button>
+            </div>
+          </LiquidFrame>
       </div>
     );
   }
@@ -214,7 +215,7 @@ export function WalletPanel({ serverUrl, active }: { serverUrl: string; active: 
     <div className="panel">
 
       {/* ── Balance card ── */}
-      <div className="card">
+      <LiquidFrame variant="card" radius={8} className="card">
         <div className="card-head">
           <div className="ci ci-green"><IconCoin /></div>
           <span className="card-title">余额</span>
@@ -331,22 +332,22 @@ export function WalletPanel({ serverUrl, active }: { serverUrl: string; active: 
           )}
 
         </div>
-      </div>
+      </LiquidFrame>
 
       {/* ── Mnemonic warning ── */}
       {showMnemonic && (
-        <div className="warn-card">
+        <LiquidFrame variant="card" radius={8} className="warn-card">
           <span className="warn-label">助记词 — 请妥善保管，切勿截图</span>
           <p className="mnemonic-text">{mnemonic}</p>
           <button className="btn btn-ghost btn-sm" style={{ alignSelf: "flex-start" }}
             onClick={() => setShowMnemonic(false)}>
             隐藏
           </button>
-        </div>
+        </LiquidFrame>
       )}
 
       {/* ── Payment history ── */}
-      <div className="card">
+      <LiquidFrame variant="card" radius={8} className="card">
         <div className="card-head">
           <div className="ci ci-blue"><IconHistory /></div>
           <span className="card-title">消费记录</span>
@@ -423,7 +424,7 @@ export function WalletPanel({ serverUrl, active }: { serverUrl: string; active: 
             </p>
           </div>
         )}
-      </div>
+      </LiquidFrame>
 
     </div>
   );

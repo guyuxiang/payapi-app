@@ -29,6 +29,7 @@ import {
   recTimestamp,
   recTokens,
 } from "../lib/payrecord";
+import { LiquidFrame } from "./LiquidFrame";
 import { HourlyBucket, SpendingChart } from "./SpendingChart";
 
 // ── Network config ─────────────────────────────────────────
@@ -171,13 +172,13 @@ function MiniStat({ title, value, sub, accent }: {
 }) {
   const colorMap = { clay: "var(--clay)", green: "var(--green)", blue: "var(--blue)" };
   return (
-    <div className="mini-stat">
+    <LiquidFrame variant="stat" radius={14} className="mini-stat">
       <span className="mini-stat-title">{title}</span>
       <span className="mini-stat-value" style={accent ? { color: colorMap[accent] } : undefined}>
         {value}
       </span>
       {sub && <span className="mini-stat-sub">{sub}</span>}
-    </div>
+    </LiquidFrame>
   );
 }
 
@@ -387,7 +388,7 @@ export function OverviewTab({ serverUrl, active }: { serverUrl: string; active: 
       )}
 
       {/* ── Proxy mode toggle ── */}
-      <div className="card">
+      <LiquidFrame variant="card" radius={8} className="card">
         <div className="card-head">
           <div className={`ci ${modeOn ? "ci-clay" : "ci-dim"}`}><IconPower /></div>
           <span className="card-title">代理模式</span>
@@ -419,10 +420,10 @@ export function OverviewTab({ serverUrl, active }: { serverUrl: string; active: 
             {modeOn ? "AI 请求通过本地代理，按 USDC 按需结算" : "开启后自动配置已安装的 AI 编码工具"}
           </p>
         </div>
-      </div>
+      </LiquidFrame>
 
       {/* ── Tool config ── */}
-      <div className="card">
+      <LiquidFrame variant="card" radius={8} className="card">
         <div className="card-head">
           <div className="ci ci-amber"><IconTools /></div>
           <span className="card-title">工具配置</span>
@@ -463,10 +464,10 @@ export function OverviewTab({ serverUrl, active }: { serverUrl: string; active: 
             })}
           </div>
         </div>
-      </div>
+      </LiquidFrame>
 
       {/* ── Request trend ── */}
-      <div className="card">
+      <LiquidFrame variant="card" radius={8} className="card">
         <div className="card-head">
           <div className="ci ci-blue"><IconTrend /></div>
           <span className="card-title">请求趋势</span>
@@ -487,11 +488,11 @@ export function OverviewTab({ serverUrl, active }: { serverUrl: string; active: 
             </span>
           </div>
         </div>
-      </div>
+      </LiquidFrame>
 
       {/* ── Distribution pair ── */}
       <div className="dist-pair">
-        <div className="card" style={{ flex: 1, minWidth: 0 }}>
+        <LiquidFrame variant="card" radius={8} className="card" style={{ flex: 1, minWidth: 0 }}>
           <div className="card-head">
             <div className="ci ci-amber"><IconGrid /></div>
             <span className="card-title">工具分布</span>
@@ -509,9 +510,9 @@ export function OverviewTab({ serverUrl, active }: { serverUrl: string; active: 
               <p className="dist-empty">暂无数据</p>
             )}
           </div>
-        </div>
+        </LiquidFrame>
 
-        <div className="card" style={{ flex: 1, minWidth: 0 }}>
+        <LiquidFrame variant="card" radius={8} className="card" style={{ flex: 1, minWidth: 0 }}>
           <div className="card-head">
             <div className="ci ci-purple"><IconGrid /></div>
             <span className="card-title">模型分布</span>
@@ -532,11 +533,11 @@ export function OverviewTab({ serverUrl, active }: { serverUrl: string; active: 
               <p className="dist-empty">暂无数据</p>
             )}
           </div>
-        </div>
+        </LiquidFrame>
       </div>
 
       {/* ── Session summary ── */}
-      <div className="card">
+      <LiquidFrame variant="card" radius={8} className="card">
         <div className="card-head">
           <div className={`ci ${proxyPort ? "ci-green" : "ci-dim"}`}><IconShield /></div>
           <span className="card-title">会话摘要</span>
@@ -570,7 +571,7 @@ export function OverviewTab({ serverUrl, active }: { serverUrl: string; active: 
             </div>
           )}
         </div>
-      </div>
+      </LiquidFrame>
 
     </div>
   );

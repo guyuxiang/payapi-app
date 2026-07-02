@@ -3,7 +3,9 @@ import { Toaster } from "react-hot-toast";
 import { OverviewTab } from "./components/OverviewTab";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { WalletPanel } from "./components/WalletPanel";
+import { LiquidFrame } from "./components/LiquidFrame";
 import { getSetting, setSetting } from "./lib/api";
+import type { ReactElement } from "react";
 
 type Tab = "overview" | "wallet" | "settings";
 
@@ -43,17 +45,11 @@ const IconSettings = () => (
 
 // ─────────────────────────────────────────────────────────
 
-const NAV: { id: Tab; label: string; Icon: () => JSX.Element }[] = [
+const NAV: { id: Tab; label: string; Icon: () => ReactElement }[] = [
   { id: "overview",  label: "概览", Icon: IconOverview  },
   { id: "wallet",    label: "钱包", Icon: IconWallet    },
   { id: "settings",  label: "设置", Icon: IconSettings  },
 ];
-
-const PAGE_TITLES: Record<Tab, string> = {
-  overview: "概览",
-  wallet:   "钱包",
-  settings: "设置",
-};
 
 export default function App() {
   const [tab, setTab]           = useState<Tab>("overview");
@@ -99,35 +95,33 @@ export default function App() {
       />
 
       {/* ── Sidebar ── */}
-      <aside className="sidebar">
-        <div className="sb-brand" aria-hidden="true">
-          <div className="sb-logo" />
-        </div>
+      <LiquidFrame variant="rail" radius={22} className="sidebar-frame">
+        <aside className="sidebar">
+          <div className="sb-brand" aria-hidden="true">
+            <div className="sb-logo" />
+          </div>
 
-        <nav className="sb-nav">
-          {NAV.map(({ id, label, Icon }) => (
-            <button
-              key={id}
-              className={`sb-btn${tab === id ? " active" : ""}`}
-              onClick={() => setTab(id)}
-              title={label}
-            >
-              <Icon />
-            </button>
-          ))}
-        </nav>
+          <nav className="sb-nav">
+            {NAV.map(({ id, label, Icon }) => (
+              <button
+                key={id}
+                className={`sb-btn${tab === id ? " active" : ""}`}
+                onClick={() => setTab(id)}
+                title={label}
+              >
+                <Icon />
+              </button>
+            ))}
+          </nav>
 
-        <div className="sb-footer">
-          <span className="sb-ver">x402</span>
-        </div>
-      </aside>
+          <div className="sb-footer">
+            <span className="sb-ver">x402</span>
+          </div>
+        </aside>
+      </LiquidFrame>
 
       {/* ── Main area ── */}
       <div className="main-area">
-        <header className="page-header">
-          <span className="page-title">{PAGE_TITLES[tab]}</span>
-        </header>
-
         <div style={{ flex: 1, overflow: "auto", display: tab === "overview" ? undefined : "none" }}>
           <OverviewTab serverUrl={serverUrl} active={tab === "overview"} />
         </div>

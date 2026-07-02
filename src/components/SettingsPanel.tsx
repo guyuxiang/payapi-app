@@ -5,6 +5,7 @@ import {
   setSetting,
 } from "../lib/api";
 import { extractError } from "../lib/error";
+import { LiquidFrame } from "./LiquidFrame";
 
 // ── SVG icons ──────────────────────────────────────────────
 
@@ -69,7 +70,7 @@ export function SettingsPanel({ serverUrl, setServerUrl, active }: Props) {
     <div className="panel">
 
       {/* ── Server URL ── */}
-      <div className="card">
+      <LiquidFrame variant="card" radius={8} className="card">
         <div className="card-head">
           <div className="ci ci-blue"><IconServer /></div>
           <span className="card-title">xPay 服务器</span>
@@ -87,10 +88,10 @@ export function SettingsPanel({ serverUrl, setServerUrl, active }: Props) {
             <p className="form-hint">x402 服务端，代理将把 AI 请求转发至此</p>
           </div>
         </div>
-      </div>
+      </LiquidFrame>
 
       {/* ── Network ── */}
-      <div className="card">
+      <LiquidFrame variant="card" radius={8} className="card">
         <div className="card-head">
           <div className="ci ci-clay"><IconChain /></div>
           <span className="card-title">支付网络</span>
@@ -106,10 +107,10 @@ export function SettingsPanel({ serverUrl, setServerUrl, active }: Props) {
           </select>
           <p className="form-hint">选择 USDC 结算的区块链网络</p>
         </div>
-      </div>
+      </LiquidFrame>
 
       {/* ── Proxy port info ── */}
-      <div className="card">
+      <LiquidFrame variant="card" radius={8} className="card">
         <div className="card-head">
           <div className="ci ci-purple"><IconPort /></div>
           <span className="card-title">本地代理端口</span>
@@ -118,7 +119,7 @@ export function SettingsPanel({ serverUrl, setServerUrl, active }: Props) {
           <input className="input-field" type="text" defaultValue="8402" readOnly />
           <p className="form-hint">ANTHROPIC_BASE_URL=http://localhost:8402</p>
         </div>
-      </div>
+      </LiquidFrame>
 
       <button className="btn btn-primary" onClick={save}>保存设置</button>
 
